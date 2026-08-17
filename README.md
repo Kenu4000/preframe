@@ -65,7 +65,7 @@ npm run validate:assets
 
 ## 実データ診断プレビュー（Windows）
 
-`private/kanon_original/scenario/` に `.org` と同名の `.utf` を1組以上置くと、次の1コマンドで自動テスト、原作アセット検査、全シナリオのKAG生成、ローカルKiriKiriへの配置、`tvpwin64.exe`の起動まで行います。ファイル名順で最初のシナリオから開始し、`jump(70)`のような命令は生成済みの`SEEN0070.ks`へ切り替わります。
+`private/kanon_original/scenario/` に `.org` を1つ以上置くと、次の1コマンドで自動テスト、原作アセット検査、全シナリオのKAG生成、ローカルKiriKiriへの配置、`tvpwin64.exe`の起動まで行います。本文リソースを持つシーンには同名の`.utf`を置き、制御命令だけのシーンは`.org`単独で構いません。`.utf`だけが存在する場合は入力ミスとして停止します。ファイル名順で最初のシナリオから開始し、`jump(70)`のような命令は生成済みの`SEEN0070.ks`へ切り替わります。
 
 ```console
 npm.cmd run test:kanon

@@ -208,6 +208,40 @@ test("Kprl decoder fails when a referenced resource is absent", () => {
   assert.equal(diagnostic.commands[1].payload.decodedPayload.resourceId, "9999");
 });
 
+test("Kprl diagnostic decoder preserves title with a missing resource", () => {
+  const disassembly = [
+    "#file 'SEEN8501.TXT'",
+    "#resource 'SEEN8501.utf'",
+    "#entrypoint 000 // S00",
+    "title(#res<0001>)"
+  ].join("\n");
+
+  assert.throws(
+    () =>
+      new KprlDisassemblyDecoder().decode(
+        { disassembly, resources: "" },
+        { sourceFile: "SEEN8501.org", resourceFile: "SEEN8501.utf" }
+      ),
+    /title resource 0001 is missing/
+  );
+
+  const diagnostic = new KanonParser().parse(
+    new KprlDisassemblyDecoder().decode(
+      { disassembly, resources: "" },
+      {
+        sourceFile: "SEEN8501.org",
+        resourceFile: "SEEN8501.utf",
+        allowMissingResources: true
+      }
+    )
+  );
+  const title = diagnostic.commands[1];
+  assert.equal(title.kind, "unknown");
+  assert.equal(title.payload.proposedKind, "kanon.kprl.title");
+  assert.equal(title.payload.decodedPayload.resourceId, "0001");
+  assert.equal(title.payload.decodedPayload.resourceMissing, true);
+});
+
 test("Kprl decoder resolves asset ids assembled by the cut SEEN0070 object sequence", () => {
   const disassembly = [
     "#file 'SEEN0070.TXT'",

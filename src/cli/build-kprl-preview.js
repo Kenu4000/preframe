@@ -9,6 +9,7 @@ import { reduceScenarioLinearly } from "../kanon/state.js";
 import { renderScenarioTrace } from "../kanon/trace.js";
 import { collectScenarioAssetReferences, createDiagnosticPreviewScenario } from "../kanon/preview.js";
 import { copyResolvedAssets, resolveLocalAssetReferences } from "../kanon/local-asset-resolver.js";
+import { groupKprlScenarioFileNames } from "../kanon/kprl-scenario-files.js";
 import { KagEmitter } from "../runtime/kag-emitter.js";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
@@ -36,25 +37,19 @@ function requireInside(root, candidate, label) {
 async function findScenarioPairs() {
   const scenarioRoot = path.join(privateRoot, "kanon_original", "scenario");
   const entries = (await readdir(scenarioRoot, { withFileTypes: true })).filter((entry) => entry.isFile());
-  const byStem = new Map();
-  for (const entry of entries) {
-    const extension = path.extname(entry.name).toLowerCase();
-    if (extension !== ".org" && extension !== ".utf") continue;
-    const stem = entry.name.slice(0, -extension.length);
-    const key = stem.toLowerCase();
-    const pair = byStem.get(key) ?? { stem };
-    pair[extension.slice(1)] = path.join(scenarioRoot, entry.name);
-    byStem.set(key, pair);
+  const { scenarios: groupedScenarios, resourceOnly } = groupKprlScenarioFileNames(entries.map((entry) => entry.name));
+  if (resourceOnly.length > 0) {
+    throw new Error(`--auto found .utf files without matching .org: ${resourceOnly.map((pair) => pair.stem).join(", ")}`);
   }
-  const incomplete = [...byStem.values()].filter((pair) => !pair.org || !pair.utf);
-  if (incomplete.length > 0) {
-    throw new Error(`--auto found incomplete .org/.utf pairs: ${incomplete.map((pair) => pair.stem).join(", ")}`);
+  const scenarios = groupedScenarios.map((scenario) => ({
+    stem: scenario.stem,
+    org: path.join(scenarioRoot, scenario.org),
+    ...(scenario.utf ? { utf: path.join(scenarioRoot, scenario.utf) } : {})
+  }));
+  if (scenarios.length === 0) {
+    throw new Error("--auto requires at least one .org file in private/kanon_original/scenario");
   }
-  const complete = [...byStem.values()].sort((left, right) => left.stem.localeCompare(right.stem, "en"));
-  if (complete.length === 0) {
-    throw new Error("--auto requires at least one .org/.utf pair in private/kanon_original/scenario");
-  }
-  return complete;
+  return scenarios;
 }
 
 async function assertFile(file, label) {
@@ -79,18 +74,21 @@ if (hasFlag("--auto")) {
 const decodedScenarios = await Promise.all(
   inputPairs.map(async (pair) => {
     const orgPath = requireInside(privateRoot, pair.org, "--org");
-    const resourcePath = requireInside(privateRoot, pair.utf, "--resource");
-    const [disassembly, resources] = await Promise.all([readFile(orgPath.resolved), readFile(resourcePath.resolved)]);
+    const resourcePath = pair.utf ? requireInside(privateRoot, pair.utf, "--resource") : null;
+    const [disassembly, resources] = await Promise.all([
+      readFile(orgPath.resolved),
+      resourcePath ? readFile(resourcePath.resolved) : Promise.resolve(Buffer.from("", "utf8"))
+    ]);
     const decoded = new KprlDisassemblyDecoder().decode(
       { disassembly, resources },
       {
         sourceFile: orgPath.relative,
-        resourceFile: resourcePath.relative,
+        resourceFile: resourcePath?.relative ?? orgPath.relative.replace(/\.org$/iu, ".utf"),
         allowMissingResources: true
       }
     );
     return {
-      source: { org: orgPath.relative, resource: resourcePath.relative },
+      source: { org: orgPath.relative, resource: resourcePath?.relative ?? null },
       scenario: new KanonParser().parse(decoded)
     };
   })
