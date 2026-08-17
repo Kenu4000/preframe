@@ -300,6 +300,7 @@ export class KprlDisassemblyDecoder extends KanonDecoder {
         if (!resource) {
           throw new KanonModelError(`Kprl resource ${id} referenced at ${sourceFile}:${source.lineNumber} is missing`);
         }
+        const message = parseMessageMarkup(resource.value);
         records.push({
           sourceFile,
           offset: source.byteOffset,
@@ -307,7 +308,8 @@ export class KprlDisassemblyDecoder extends KanonDecoder {
           rawArguments: [{ type: "resourceRef", value: id, raw: `#res<${id}>` }],
           decodedKind: "text",
           payload: {
-            ...parseMessageMarkup(resource.value),
+            ...message,
+            ...(message.speakerMarkup ? { speakerPresentation: "inline-prefix" } : {}),
             resourceId: id,
             resourceSource: {
               file: resource.sourceFile,

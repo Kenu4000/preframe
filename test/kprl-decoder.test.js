@@ -66,6 +66,7 @@ test("Kprl decoder joins numbered resources without discarding source provenance
 
   const text = scenario.commands[5];
   assert.equal(text.payload.speaker, "Guide");
+  assert.equal(text.payload.speakerPresentation, "inline-prefix");
   assert.equal(text.payload.text, "Synthetic line");
   assert.equal(text.payload.resourceId, "0001");
   assert.equal(text.payload.resourceSource.file, "SCENE0001.utf");
