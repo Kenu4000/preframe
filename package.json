@@ -1,0 +1,16 @@
+{
+  "name": "preframe-kanon-port",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build:dummy": "node src/cli/build-dummy.js",
+    "check": "node src/cli/check.js",
+    "test": "node --test",
+    "verify": "npm run check && npm test && npm run build:dummy"
+  }
+}
+

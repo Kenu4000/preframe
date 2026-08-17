@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "scenario": {
+    "id": "dummy",
+    "entryLabel": "start"
+  },
+  "sourceFile": "DUMMY_CONTROL.DATA",
+  "records": [
+    {
+      "offset": 0,
+      "opcode": "DUMMY_LABEL",
+      "rawArguments": [{ "type": "string", "value": "start" }],
+      "decodedKind": "label",
+      "payload": { "name": "start" }
+    },
+    {
+      "offset": 16,
+      "opcode": "DUMMY_BACKGROUND",
+      "rawArguments": [{ "type": "asset-id", "value": 100 }],
+      "decodedKind": "background.show",
+      "payload": { "asset": { "kind": "background", "logicalId": "bg.dummy.room", "originalId": 100 } }
+    },
+    {
+      "offset": 32,
+      "opcode": "DUMMY_SPRITE",
+      "rawArguments": [{ "type": "asset-id", "value": 200 }, { "type": "position", "value": "center" }],
+      "decodedKind": "sprite.show",
+      "payload": {
+        "asset": { "kind": "sprite", "logicalId": "sprite.dummy.character", "originalId": 200 },
+        "slot": "main",
+        "position": "center",
+        "layer": 0,
+        "opacity": 255
+      }
+    },
+    {
+      "offset": 48,
+      "opcode": "DUMMY_TRANSITION",
+      "rawArguments": [{ "type": "u16", "value": 350 }],
+      "decodedKind": "transition",
+      "payload": { "method": "crossfade", "durationMs": 350, "wait": true }
+    },
+    {
+      "offset": 64,
+      "opcode": "DUMMY_BGM",
+      "rawArguments": [{ "type": "asset-id", "value": 300 }],
+      "decodedKind": "bgm.play",
+      "payload": { "asset": { "kind": "bgm", "logicalId": "bgm.dummy", "originalId": 300 }, "loop": true }
+    },
+    {
+      "offset": 80,
+      "opcode": "DUMMY_VOICE",
+      "rawArguments": [{ "type": "asset-id", "value": 500 }],
+      "decodedKind": "voice.play",
+      "payload": { "asset": { "kind": "voice", "logicalId": "voice.dummy.line1", "originalId": 500 }, "channel": 1 }
+    },
+    {
+      "offset": 96,
+      "opcode": "DUMMY_TEXT",
+      "rawArguments": [{ "type": "string-ref", "value": 1 }],
+      "decodedKind": "text",
+      "payload": { "speaker": "テスト", "text": "これは原作データを含まない合成シーンです。", "pageBreak": true }
+    },
+    {
+      "offset": 112,
+      "opcode": "DUMMY_SE",
+      "rawArguments": [{ "type": "asset-id", "value": 400 }],
+      "decodedKind": "se.play",
+      "payload": { "asset": { "kind": "se", "logicalId": "se.dummy.click", "originalId": 400 }, "channel": 0, "loop": false }
+    },
+    {
+      "offset": 128,
+      "opcode": "DUMMY_FLAG",
+      "rawArguments": [{ "type": "u16", "value": 1 }, { "type": "bool", "value": true }],
+      "decodedKind": "flag.set",
+      "payload": { "name": "dummy_seen", "value": true }
+    },
+    {
+      "offset": 144,
+      "opcode": "DUMMY_WAIT",
+      "rawArguments": [{ "type": "u16", "value": 250 }],
+      "decodedKind": "wait",
+      "payload": { "durationMs": 250, "skippable": false }
+    },
+    {
+      "offset": 160,
+      "opcode": "DUMMY_END",
+      "rawArguments": [],
+      "decodedKind": "end",
+      "payload": {}
+    }
+  ]
+}
+

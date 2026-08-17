@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "originalRoot": "private/kanon_original",
+  "cacheRoot": "cache/kanon",
+  "sources": {
+    "seen": "SEEN.TXT",
+    "control": "CONTROL_DATA_PATH_FROM_ROOT",
+    "images": "IMAGE_DATA_PATH_FROM_ROOT",
+    "bgm": "BGM_DATA_PATH_FROM_ROOT",
+    "se": "SE_DATA_PATH_FROM_ROOT",
+    "voice": "VOICE_DATA_PATH_FROM_ROOT"
+  },
+  "assetManifest": "private/kanon_original/assets.local.json"
+}
+

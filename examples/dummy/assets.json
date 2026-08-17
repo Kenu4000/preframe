@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "assets": [
+    { "kind": "background", "logicalId": "bg.dummy.room", "originalId": 100, "runtimeStorage": "assets/background/dummy-room.png" },
+    { "kind": "sprite", "logicalId": "sprite.dummy.character", "originalId": 200, "runtimeStorage": "assets/sprite/dummy-character.png" },
+    { "kind": "bgm", "logicalId": "bgm.dummy", "originalId": 300, "runtimeStorage": "assets/bgm/dummy-bgm.wav" },
+    { "kind": "se", "logicalId": "se.dummy.click", "originalId": 400, "runtimeStorage": "assets/se/dummy-se.wav" },
+    { "kind": "voice", "logicalId": "voice.dummy.line1", "originalId": 500, "runtimeStorage": "assets/voice/dummy-voice.wav" }
+  ]
+}
+

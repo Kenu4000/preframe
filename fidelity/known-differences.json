@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "differences": [
+    {
+      "id": "KF-0001",
+      "title": "実Kanon制御データDecoderは未実装",
+      "status": "open",
+      "severity": "blocking",
+      "scope": "importer",
+      "originalBehavior": "解析済み制御データから原作命令列を復元できる",
+      "portBehavior": "合成JSONレコードだけをDecoder契約の検証入力にできる",
+      "evidence": "実フォーマットの抽象化済み仕様待ち",
+      "verification": "既知の1シーンをdecodeし、offset・opcode・引数・命令数を解析結果と照合する"
+    },
+    {
+      "id": "KF-0002",
+      "title": "KiriKiri/KAG実機でのダミー再生は未検証",
+      "status": "open",
+      "severity": "high",
+      "scope": "runtime",
+      "originalBehavior": "対象のKiriKiri/KAG環境で画面・音・入力が動作する",
+      "portBehavior": "KAG出力と生成アセットの静的検査まで完了できる",
+      "evidence": "リポジトリにKiriKiri/KAG本体を同梱していない",
+      "verification": "Windows上の採用KAGテンプレートへ生成物を配置し、first.ksから通し再生する"
+    }
+  ]
+}
+
