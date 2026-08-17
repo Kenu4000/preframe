@@ -37,9 +37,31 @@ test("verified Kanon opening commands update visible state explicitly", () => {
     scenario: { id: "verified-state", entryLabel: "start" },
     records: [
       { offset: 0, opcode: "#entrypoint", rawArguments: [], decodedKind: "label", payload: { name: "start" } },
-      { offset: 1, opcode: "msgHide", rawArguments: [], decodedKind: "kanon.message.hide", payload: {} },
+      {
+        offset: 1,
+        opcode: "bgmLoop",
+        rawArguments: [],
+        decodedKind: "bgm.play",
+        payload: {
+          asset: { kind: "bgm", logicalId: "kanon.bgm.BGM16", originalId: "BGM16" },
+          loop: true,
+          stopTrigger: "bgmFadeOut"
+        }
+      },
       {
         offset: 2,
+        opcode: "msgHide",
+        rawArguments: [],
+        decodedKind: "kanon.message.hide",
+        payload: {
+          durationMs: 200,
+          transitionMethod: "crossfade",
+          target: "message0",
+          verifiedBehavior: true
+        }
+      },
+      {
+        offset: 3,
         opcode: "grpOpenBg",
         rawArguments: [],
         decodedKind: "kanon.background.open",
@@ -48,23 +70,34 @@ test("verified Kanon opening commands update visible state explicitly", () => {
           effectCode: 0,
           verifiedBehavior: true,
           transitionMethod: "crossfade",
-          durationMs: 500,
-          sourceColor: "white"
+          durationMs: 500
         }
       },
       {
-        offset: 3,
+        offset: 4,
         opcode: "#res",
         rawArguments: [],
         decodedKind: "text",
         payload: { text: "Synthetic line", usesTextWindow: true, advanceMode: "kanon.pause" }
       },
       {
-        offset: 4,
+        offset: 5,
         opcode: "pause",
         rawArguments: [],
         decodedKind: "kanon.message.pause",
         payload: { mode: "txtwindow", clearTextAfterClick: true }
+      },
+      {
+        offset: 6,
+        opcode: "bgmFadeOut",
+        rawArguments: [],
+        decodedKind: "kanon.bgm.fadeOut",
+        payload: {
+          rawDuration: 1200,
+          durationUnit: "unverified",
+          durationUnitVerified: false,
+          stopsAfterFade: true
+        }
       }
     ]
   });
@@ -72,7 +105,10 @@ test("verified Kanon opening commands update visible state explicitly", () => {
   assert.equal(state.visual.background.logicalId, "kanon.background.BG053");
   assert.equal(state.transition.last.kanonEffectCode, 0);
   assert.equal(state.transition.last.durationMs, 500);
-  assert.equal(state.timing.elapsedRequestedMs, 500);
+  assert.equal(state.timing.elapsedRequestedMs, 700);
   assert.equal(state.ui.messageVisible, true);
   assert.equal(state.ui.lastMessage, null);
+  assert.equal(state.audio.bgm.status, "fading-out");
+  assert.equal(state.audio.bgm.stopTrigger, "bgmFadeOut");
+  assert.equal(state.audio.bgm.fadeOut.rawDuration, 1200);
 });
