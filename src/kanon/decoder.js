@@ -50,7 +50,9 @@ export class JsonDecodedRecordDecoder extends KanonDecoder {
         decodedKind: typeof record.decodedKind === "string" ? record.decodedKind : null,
         payload: record.payload && typeof record.payload === "object" ? structuredClone(record.payload) : {},
         sourceFile,
-        synthetic: Boolean(context.synthetic ?? document.synthetic ?? false)
+        synthetic: Boolean(context.synthetic ?? document.synthetic ?? false),
+        provenance: typeof record.provenance === "string" ? record.provenance : null,
+        line: Number.isSafeInteger(record.line) ? record.line : null
       };
     });
 
@@ -61,4 +63,3 @@ export class JsonDecodedRecordDecoder extends KanonDecoder {
     };
   }
 }
-
