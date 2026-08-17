@@ -23,10 +23,11 @@ KAGタグは出力形式であり、共通命令規格ではありません。�
 - Kanonの再現状態を命令単位で更新する
 - 内容を伏せた実行トレースを生成する
 - 対応済み命令をKAGシナリオへ出力する
+- Kprl 1.45の `.org` と `.utf` を、本文をGitへ入れずdecoded recordへ変換する
 - 合成ダミー画像・音声だけで最小シーン一式を生成する
 - 既知の再現差分を機械可読な台帳で管理する
 
-実データ用Decoderは、実際の制御データ仕様を受け取ってから実装します。現時点では仕様を推測していません。
+Kprl逆アセンブルImporterは追加済みです。ただし、Kprl命令名だけでは挙動を確定せず、未確認命令を `unknown` に保ちます。元バイナリのbyte offsetと数値opcodeを復元するDecoderは未実装です。詳細は [docs/kprl-importer.md](docs/kprl-importer.md) を参照してください。
 
 ## 実行
 
@@ -59,4 +60,3 @@ state/dummy.final-state.json
 ## 次の実装入力
 
 実Importerの着手に必要なのは原作ファイルそのものではなく、[docs/decoder-contract.md](docs/decoder-contract.md) に定義した抽象化済み情報です。
-
