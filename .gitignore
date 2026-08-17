@@ -1,6 +1,7 @@
 # Original game data and local-only manifests
 private/**
 !private/README.md
+upload/**
 
 # Reproducible generated data
 cache/**
@@ -15,4 +16,3 @@ coverage/
 *.log
 .DS_Store
 Thumbs.db
-
