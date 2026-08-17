@@ -31,7 +31,15 @@ export class KanonModelError extends Error {
   }
 }
 
-export function createSourceLocation({ file, offset, opcode, rawArguments = [], synthetic = false }) {
+export function createSourceLocation({
+  file,
+  offset,
+  opcode,
+  rawArguments = [],
+  synthetic = false,
+  provenance = null,
+  line = null
+}) {
   if (typeof file !== "string" || file.length === 0) {
     throw new KanonModelError("source.file must be a non-empty string");
   }
@@ -44,13 +52,21 @@ export function createSourceLocation({ file, offset, opcode, rawArguments = [], 
   if (!Array.isArray(rawArguments)) {
     throw new KanonModelError("source.rawArguments must be an array");
   }
+  if (provenance !== null && (typeof provenance !== "string" || provenance.length === 0)) {
+    throw new KanonModelError("source.provenance must be null or a non-empty string");
+  }
+  if (line !== null && (!Number.isSafeInteger(line) || line < 1)) {
+    throw new KanonModelError("source.line must be null or a positive safe integer");
+  }
 
   return Object.freeze({
     file,
     offset,
     opcode,
     rawArguments: structuredClone(rawArguments),
-    synthetic: Boolean(synthetic)
+    synthetic: Boolean(synthetic),
+    provenance,
+    line
   });
 }
 
@@ -122,4 +138,3 @@ export class KanonScenario {
     Object.freeze(this);
   }
 }
-
