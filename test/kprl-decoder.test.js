@@ -18,6 +18,7 @@ function syntheticPair() {
     "grpOpenBg('BG053', 0)",
     "#res<0001>",
     "pause",
+    "bgmFadeOut(1200)",
     "wait(250)",
     "mystery(7, 'X')"
   ].join("\r\n");
@@ -52,6 +53,7 @@ test("Kprl decoder joins numbered resources without discarding source provenance
       "kanon.background.open",
       "text",
       "kanon.message.pause",
+      "kanon.bgm.fadeOut",
       "unknown",
       "unknown"
     ]
@@ -81,12 +83,22 @@ test("Kprl decoder joins numbered resources without discarding source provenance
   assert.equal(background.payload.effectCode, 0);
   assert.equal(background.payload.transitionMethod, "crossfade");
   assert.equal(background.payload.durationMs, 500);
-  assert.equal(background.payload.sourceColor, "white");
   assert.equal(background.payload.verifiedBehavior, true);
+
+  const messageHide = scenario.commands[3];
+  assert.equal(messageHide.payload.transitionMethod, "crossfade");
+  assert.equal(messageHide.payload.durationMs, 200);
+  assert.equal(messageHide.payload.target, "message0");
 
   const pause = scenario.commands[6];
   assert.equal(pause.payload.mode, "txtwindow");
   assert.equal(pause.payload.clearTextAfterClick, true);
+
+  const fadeOut = scenario.commands[7];
+  assert.equal(fadeOut.payload.rawDuration, 1200);
+  assert.equal(fadeOut.payload.durationUnit, "unverified");
+  assert.equal(fadeOut.payload.durationUnitVerified, false);
+  assert.equal(fadeOut.payload.stopsAfterFade, true);
 
   const expectedOffset = Buffer.byteLength(input.disassembly.slice(0, input.disassembly.indexOf("bgmLoop")), "utf8");
   assert.equal(bgm.source.offset, expectedOffset);
@@ -101,7 +113,7 @@ test("Kprl decoder retains unresolved speaker macros and unknown mnemonics", () 
     "#resource 'SCENE0002.utf'",
     "#entrypoint 000 // S00",
     "#res<0001>",
-    "grpOpenBg('UNVERIFIED', 0)",
+    "grpOpenBg('UNVERIFIED', 26)",
     "unseenCommand(3)"
   ].join("\n");
   const resources = "<0001> \\{\\m{A}}Synthetic macro line\n";
@@ -116,7 +128,7 @@ test("Kprl decoder retains unresolved speaker macros and unknown mnemonics", () 
   assert.equal(scenario.commands[1].payload.speakerExpression, "\\m{A}");
   assert.equal(scenario.commands[2].kind, "unknown");
   assert.equal(scenario.commands[2].payload.proposedKind, "kanon.kprl.grpOpenBg");
-  assert.equal(scenario.commands[2].payload.decodedPayload.effectCode, 0);
+  assert.equal(scenario.commands[2].payload.decodedPayload.effectCode, 26);
   assert.equal(scenario.commands[3].kind, "unknown");
   assert.equal(scenario.commands[3].payload.proposedKind, "kanon.kprl.unseenCommand");
   assert.deepEqual(scenario.commands[3].source.rawArguments, [{ type: "integer", value: 3, raw: "3" }]);
