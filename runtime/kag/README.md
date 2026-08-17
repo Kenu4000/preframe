@@ -4,6 +4,8 @@
 
 出力はKAG3の標準タグを使用します。KiriKiri/KAG本体とテンプレートは同梱しません。採用するKiriKiri Z/KAG配布物の版は、Windows実機検証時に固定してください。
 
+公式のKiriKiri Z 1.4.0r2配布物では、実行ファイル名は`krkrz.exe`ではなく`tvpwin64.exe`（64bit版）と`tvpwin32.exe`（32bit版）です。通常の64bit Windowsでは`tvpwin64.exe`から確認します。`tvpwin32_dbg.exe`や`krkrdebug.exe`は通常起動用ではありません。
+
 ## ダミー再生
 
 1. リポジトリ直下で `npm run build:dummy` を実行する。
