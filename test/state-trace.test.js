@@ -66,7 +66,7 @@ test("verified Kanon opening commands update visible state explicitly", () => {
         rawArguments: [],
         decodedKind: "kanon.background.open",
         payload: {
-          asset: { kind: "background", logicalId: "kanon.background.BG053", originalId: "BG053" },
+          asset: { kind: "background", logicalId: "kanon.background.FGNY02A", originalId: "FGNY02A" },
           effectCode: 0,
           verifiedBehavior: true,
           transitionMethod: "crossfade",
@@ -102,7 +102,7 @@ test("verified Kanon opening commands update visible state explicitly", () => {
     ]
   });
   const state = reduceScenarioLinearly(new KanonParser().parse(decoded));
-  assert.equal(state.visual.background.logicalId, "kanon.background.BG053");
+  assert.equal(state.visual.background.logicalId, "kanon.background.FGNY02A");
   assert.equal(state.transition.last.kanonEffectCode, 0);
   assert.equal(state.transition.last.durationMs, 500);
   assert.equal(state.timing.elapsedRequestedMs, 700);
