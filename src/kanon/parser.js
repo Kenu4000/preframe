@@ -8,7 +8,14 @@ import {
 } from "./model.js";
 
 const supportedKinds = new Set(KANON_COMMAND_KINDS.filter((kind) => kind !== "unknown"));
-const assetPayloadKinds = new Set(["background.show", "sprite.show", "bgm.play", "se.play", "voice.play"]);
+const assetPayloadKinds = new Set([
+  "background.show",
+  "sprite.show",
+  "bgm.play",
+  "se.play",
+  "voice.play",
+  "kanon.background.open"
+]);
 
 export class KanonParser {
   parse(decoded) {
@@ -87,6 +94,15 @@ export class KanonParser {
       case "wait":
       case "transition":
         requireNonNegative("durationMs");
+        break;
+      case "kanon.background.open":
+        if (!Number.isSafeInteger(payload.effectCode) || payload.effectCode < 0) {
+          throw new KanonModelError("kanon.background.open.effectCode must be a non-negative integer");
+        }
+        if (payload.verifiedBehavior) {
+          requireNonNegative("durationMs");
+          requireString("transitionMethod");
+        }
         break;
       case "variable.set":
       case "flag.set":
