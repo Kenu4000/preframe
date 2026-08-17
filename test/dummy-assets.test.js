@@ -13,8 +13,11 @@ test("dummy background matches the KAG3 default 640x480 base layer", async () =>
     assert.deepEqual([...png.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
     assert.equal(png.readUInt32BE(16), 640);
     assert.equal(png.readUInt32BE(20), 480);
+    const white = await readFile(path.join(outputRoot, "assets/system/white.png"));
+    assert.deepEqual([...white.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+    assert.equal(white.readUInt32BE(16), 640);
+    assert.equal(white.readUInt32BE(20), 480);
   } finally {
     await rm(outputRoot, { recursive: true, force: true });
   }
 });
-
