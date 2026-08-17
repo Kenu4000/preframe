@@ -21,13 +21,13 @@ npm run import:kprl -- \
 | `bgmFadeOut(rawDuration)` | `kanon.bgm.fadeOut` | BGMの終了契機として確認。引数の時間単位は未確認なのでKAG出力は停止 |
 | `msgHide` | `kanon.message.hide` | 30fps録画でtxtwindowが約0.20秒かけて消えることを確認 |
 | `pause` | `kanon.message.pause` | txtwindow方式でクリック待ちし、その後に本文を消去することを実機確認 |
-| `grpOpenBg(asset, 0)` | `kanon.background.open` | `FGNY02A`の30fps録画で約0.50秒のcrossfadeを確認。開始時の白画面はこの命令ではなく「初めから」の処理 |
+| `grpOpenBg('FGNY02A', 0)` | `kanon.background.open` | 30fps録画で約0.50秒のcrossfadeを確認。開始時の白画面はこの命令ではなく「初めから」の処理 |
 | その他の命令 | `unknown` | 命令名と型付き引数を保持し、挙動は推測しない |
 
 `.org` に原作バイナリ上のbyte offsetと数値opcodeはありません。そのため `source.offset` は `.org` 内のUTF-8 byte offset、`source.opcode` はKprlの命令名で、`provenance` は `kprl-disassembly` です。元バイナリ位置・opcodeを回復できる資料が得られた時点で、別Decoderまたは対応表を追加します。
 
 ## 未確定のまま保持するもの
 
-`title`、効果番号0以外の `grpOpenBg`、`wait`、`farcall`、`jump`、`eof`、`halt` 等は、名前だけからランタイム挙動を決めません。`kanon.kprl.<命令名>` を候補名として保持し、Parserでは `unknown` になります。`bgmFadeOut`は命令の意味だけknownですが、引数の時間単位を確定するまではKAG出力を拒否します。
+`title`、`FGNY02A + 0`以外の `grpOpenBg`、`wait`、`farcall`、`jump`、`eof`、`halt` 等は、名前だけからランタイム挙動を決めません。`kanon.kprl.<命令名>` を候補名として保持し、Parserでは `unknown` になります。`bgmFadeOut`は命令の意味だけknownですが、引数の時間単位を確定するまではKAG出力を拒否します。
 
 本文先頭の `\\{...}` はspeaker markupとして分離します。`\\m{A}` のような式は展開せず `speakerExpression` に残します。クリック待ちと本文消去は確認済みですが、名前欄、文字配置、ウィンドウ外観、macro展開は未確認なので、KAG emitterは実本文の出力をまだ拒否します。
