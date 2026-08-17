@@ -34,3 +34,27 @@ test("KAG emitter fails closed when an unknown command exists", () => {
   const emitter = new KagEmitter(new KanonAssetCatalog({ schemaVersion: 1, assets: [] }));
   assert.throws(() => emitter.emitScenario(scenario), UnsupportedKanonCommandError);
 });
+
+test("KAG emitter refuses Kprl text until its layout is verified", () => {
+  const decoded = new JsonDecodedRecordDecoder().decode({
+    schemaVersion: 1,
+    sourceFile: "SYNTHETIC.org",
+    scenario: { id: "kprl-text", entryLabel: "start" },
+    records: [
+      { offset: 0, opcode: "#entrypoint", rawArguments: [], decodedKind: "label", payload: { name: "start" } },
+      {
+        offset: 10,
+        opcode: "#res",
+        rawArguments: [{ type: "resourceRef", value: "0001" }],
+        decodedKind: "text",
+        payload: { text: "Synthetic line", requiresTextLayoutVerification: true }
+      }
+    ]
+  });
+  const scenario = new KanonParser().parse(decoded);
+  const emitter = new KagEmitter(new KanonAssetCatalog({ schemaVersion: 1, assets: [] }));
+  assert.throws(
+    () => emitter.emitScenario(scenario),
+    /Kprl text layout or speaker expression must be verified/
+  );
+});
