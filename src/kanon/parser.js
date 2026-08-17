@@ -30,7 +30,9 @@ export class KanonParser {
       offset: record.offset,
       opcode: record.opcode,
       rawArguments: record.rawArguments,
-      synthetic: record.synthetic
+      synthetic: record.synthetic,
+      provenance: record.provenance ?? null,
+      line: record.line ?? null
     });
 
     if (!record.decodedKind || !supportedKinds.has(record.decodedKind)) {
@@ -105,4 +107,3 @@ export class KanonParser {
     }
   }
 }
-
