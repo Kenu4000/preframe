@@ -180,6 +180,27 @@ function entryLabel(number, comment) {
   return /^[A-Za-z_][A-Za-z0-9_.-]*$/.test(candidate) ? candidate : `entry_${number}`;
 }
 
+function logicalAssetReference(kind, originalId) {
+  return {
+    kind,
+    logicalId: `kanon.${kind}.${originalId}`,
+    originalId
+  };
+}
+
+function verifiedGrpOpenBgBehavior(originalId, effectCode) {
+  if (originalId === "BG053" && effectCode === 0) {
+    return {
+      verifiedBehavior: true,
+      transitionMethod: "crossfade",
+      durationMs: 500,
+      sourceColor: "white",
+      evidence: "observed-on-windows"
+    };
+  }
+  return null;
+}
+
 function unknownRecord(source, sourceFile, mnemonic, rawArguments, payload = {}) {
   return {
     sourceFile,
@@ -285,6 +306,8 @@ export class KprlDisassemblyDecoder extends KanonDecoder {
               offset: resource.byteOffset,
               line: resource.lineNumber
             },
+            usesTextWindow: true,
+            advanceMode: "kanon.pause",
             requiresTextLayoutVerification: true
           },
           synthetic: false,
@@ -326,6 +349,65 @@ export class KprlDisassemblyDecoder extends KanonDecoder {
       if (call) {
         const mnemonic = call[1];
         const rawArguments = parseArguments(call[2]);
+
+        if (mnemonic === "bgmLoop" && rawArguments.length === 1 && rawArguments[0].type === "string") {
+          const originalId = rawArguments[0].value;
+          records.push({
+            sourceFile,
+            offset: source.byteOffset,
+            opcode: mnemonic,
+            rawArguments,
+            decodedKind: "bgm.play",
+            payload: {
+              asset: logicalAssetReference("bgm", originalId),
+              loop: true,
+              timingObservation: originalId === "BGM16" ? "same-frame-with-next-background" : null,
+              sourceLine: source.lineNumber
+            },
+            synthetic: false,
+            provenance: "kprl-disassembly",
+            line: source.lineNumber
+          });
+          continue;
+        }
+
+        if (
+          mnemonic === "grpOpenBg" &&
+          rawArguments.length === 2 &&
+          rawArguments[0].type === "string" &&
+          rawArguments[1].type === "integer"
+        ) {
+          const originalId = rawArguments[0].value;
+          const effectCode = rawArguments[1].value;
+          const behavior = verifiedGrpOpenBgBehavior(originalId, effectCode);
+          if (behavior) {
+            records.push({
+              sourceFile,
+              offset: source.byteOffset,
+              opcode: mnemonic,
+              rawArguments,
+              decodedKind: "kanon.background.open",
+              payload: {
+                asset: logicalAssetReference("background", originalId),
+                effectCode,
+                ...behavior,
+                sourceLine: source.lineNumber
+              },
+              synthetic: false,
+              provenance: "kprl-disassembly",
+              line: source.lineNumber
+            });
+          } else {
+            records.push(
+              unknownRecord(source, sourceFile, mnemonic, rawArguments, {
+                candidateAsset: logicalAssetReference("background", originalId),
+                effectCode
+              })
+            );
+          }
+          continue;
+        }
+
         const payload = {};
         if (mnemonic === "title" && rawArguments[0]?.type === "resourceRef") {
           const resource = parsedResources.resources.get(rawArguments[0].value);
@@ -344,6 +426,23 @@ export class KprlDisassemblyDecoder extends KanonDecoder {
       }
 
       if (/^[A-Za-z_][A-Za-z0-9_]*$/u.test(code)) {
+        if (code === "msgHide" || code === "pause") {
+          records.push({
+            sourceFile,
+            offset: source.byteOffset,
+            opcode: code,
+            rawArguments: [],
+            decodedKind: code === "msgHide" ? "kanon.message.hide" : "kanon.message.pause",
+            payload: {
+              sourceLine: source.lineNumber,
+              ...(code === "pause" ? { clearTextAfterClick: true, mode: "txtwindow" } : {})
+            },
+            synthetic: false,
+            provenance: "kprl-disassembly",
+            line: source.lineNumber
+          });
+          continue;
+        }
         records.push(unknownRecord(source, sourceFile, code, []));
         continue;
       }
