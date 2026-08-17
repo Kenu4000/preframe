@@ -48,11 +48,10 @@ for (const difference of ledger.differences) {
 
 new KanonAssetCatalog(JSON.parse(assetsText));
 
-for (const requiredIgnore of ["private/**", "cache/**", "runtime/local/**"]) {
+for (const requiredIgnore of ["private/**", "upload/**", "cache/**", "runtime/local/**"]) {
   if (!gitignore.includes(requiredIgnore)) {
     throw new Error(`.gitignore must contain ${requiredIgnore}`);
   }
 }
 
 console.log(`Static checks passed (${ledger.differences.length} fidelity differences)`);
-
