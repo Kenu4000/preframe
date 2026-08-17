@@ -94,7 +94,7 @@ test("KAG emitter reproduces the verified opening background and txtwindow contr
         rawArguments: [{ type: "string", value: "BG053" }, { type: "integer", value: 0 }],
         decodedKind: "kanon.background.open",
         payload: {
-          asset: { kind: "background", logicalId: "kanon.background.BG053", originalId: "BG053" },
+          asset: { kind: "background", logicalId: "kanon.background.FGNY02A", originalId: "FGNY02A" },
           effectCode: 0,
           verifiedBehavior: true,
           transitionMethod: "crossfade",
@@ -121,9 +121,9 @@ test("KAG emitter reproduces the verified opening background and txtwindow contr
       },
       {
         kind: "background",
-        logicalId: "kanon.background.BG053",
-        originalId: "BG053",
-        runtimeStorage: "assets/background/BG053.png"
+        logicalId: "kanon.background.FGNY02A",
+        originalId: "FGNY02A",
+        runtimeStorage: "assets/background/FGNY02A.png"
       }
     ]
   });
@@ -134,7 +134,7 @@ test("KAG emitter reproduces the verified opening background and txtwindow contr
   const hideTransition = output.indexOf("@trans method=crossfade time=200 layer=message0", hideBacklay);
   const hide = output.indexOf("@layopt layer=message0 page=fore visible=false opacity=255", hideTransition);
   const backlay = output.indexOf("@backlay layer=base", hide);
-  const background = output.indexOf('@image storage="assets/background/BG053.png" layer=base page=back', backlay);
+  const background = output.indexOf('@image storage="assets/background/FGNY02A.png" layer=base page=back', backlay);
   const transition = output.indexOf("@trans method=crossfade time=500 layer=base children=false", background);
   const pause = output.indexOf("[p][cm]", transition);
   assert.ok(bgm >= 0 && hideBacklay > bgm && hideTransition > hideBacklay && hide > hideTransition);
