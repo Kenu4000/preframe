@@ -41,8 +41,8 @@
       "severity": "blocking",
       "scope": "importer-runtime",
       "originalBehavior": "各Kprl命令が原作どおりの画面、音、入力、制御フローを実行する",
-      "portBehavior": "bgmLoop、msgHide、pause、grpOpenBg('FGNY02A',0)、grpOpenBg('SIRO',26)、bgmFadeOut(1200)、wait(2000)、farcall(8502)のOP開始は確認済みのKanon固有命令へ昇格した。title、BG053とFGNY02BのgrpOpenBg、jump、eof、haltはunknown。OP本体の再生処理は未実装のためKAG出力を停止する",
-      "evidence": "原作実機と30fps録画で、BGMが約1.2秒でfade-out、msgHideが約0.20秒、FGNY02Aの効果番号0が約0.50秒、SIROの効果番号26が約2.0秒の白fade、続く約2.0秒保持後にOPへ移ることを確認",
+      "portBehavior": "bgmLoop、msgHide、pause、grpOpenBg('FGNY02A',0)、grpOpenBg('SIRO',26)、bgmFadeOut(1200)、wait(2000)、farcall(8502)のOP開始、jumpの別SEEN切替は確認済みのKanon固有命令へ昇格した。title、BG053とFGNY02BのgrpOpenBg、eof、haltはunknown。単一シナリオ診断では移動先SEENが未生成のjumpを記録付きで停止し、OP本体の再生処理は未実装のためKAG出力を停止する",
+      "evidence": "原作実機と30fps録画で、BGMが約1.2秒でfade-out、msgHideが約0.20秒、FGNY02Aの効果番号0が約0.50秒、SIROの効果番号26が約2.0秒の白fade、続く約2.0秒保持後にOPへ移ることを確認。ユーザー解析によりjump(70)がSEEN0050からシナリオ番号70へ切り替えることを確認",
       "verification": "各命令について引数の意味と実機挙動を確認し、1命令ずつ回帰テストを追加してknownへ昇格する"
     },
     {

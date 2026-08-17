@@ -20,6 +20,7 @@ function syntheticPair() {
     "pause",
     "bgmFadeOut(1200)",
     "wait(250)",
+    "jump(70)",
     "mystery(7, 'X')"
   ].join("\r\n");
   const resources = [
@@ -55,6 +56,7 @@ test("Kprl decoder joins numbered resources without discarding source provenance
       "kanon.message.pause",
       "kanon.bgm.fadeOut",
       "wait",
+      "kanon.scenario.jump",
       "unknown"
     ]
   );
@@ -105,6 +107,12 @@ test("Kprl decoder joins numbered resources without discarding source provenance
   assert.equal(wait.payload.durationMs, 250);
   assert.equal(wait.payload.skippable, false);
   assert.equal(wait.payload.durationUnitVerified, true);
+
+  const sceneJump = scenario.commands[9];
+  assert.equal(sceneJump.payload.targetSceneNumber, 70);
+  assert.equal(sceneJump.payload.targetScenarioId, "SEEN0070");
+  assert.equal(sceneJump.payload.verifiedBehavior, true);
+  assert.deepEqual(sceneJump.source.rawArguments, [{ type: "integer", value: 70, raw: "70" }]);
 
   const expectedOffset = Buffer.byteLength(input.disassembly.slice(0, input.disassembly.indexOf("bgmLoop")), "utf8");
   assert.equal(bgm.source.offset, expectedOffset);

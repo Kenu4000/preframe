@@ -82,6 +82,16 @@ export function createDiagnosticPreviewScenario(scenario, { availableAssetLogica
       continue;
     }
 
+    if (command.kind === "kanon.scenario.jump") {
+      skipped.push({
+        ...diagnostic,
+        reason: "target-scenario-not-built",
+        targetSceneNumber: command.payload.targetSceneNumber,
+        targetScenarioId: command.payload.targetScenarioId
+      });
+      continue;
+    }
+
     if (
       availableAssetLogicalIds &&
       assetCommandKinds.has(command.kind) &&

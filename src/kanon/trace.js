@@ -50,6 +50,8 @@ export function commandTraceSummary(command, { includeText = false } = {}) {
       return "KANON_PAUSE clear=true";
     case "kanon.opening.start":
       return `KANON_OPENING_START target=${payload.callTarget}`;
+    case "kanon.scenario.jump":
+      return `KANON_SCENARIO_JUMP number=${payload.targetSceneNumber} target=${payload.targetScenarioId}`;
     case "jump":
       return `JUMP ${payload.target}`;
     case "choice":
