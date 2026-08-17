@@ -92,9 +92,9 @@ export async function writeDummyAssets(outputRoot) {
   };
   await Promise.all(Object.values(paths).map((file) => mkdir(path.dirname(file), { recursive: true })));
 
-  const background = createPng(800, 600, (x, y) => {
-    const shade = Math.round(35 + (y / 600) * 45);
-    const grid = x % 100 < 2 || y % 100 < 2 ? 30 : 0;
+  const background = createPng(640, 480, (x, y) => {
+    const shade = Math.round(35 + (y / 480) * 45);
+    const grid = x % 80 < 2 || y % 80 < 2 ? 30 : 0;
     return [shade + grid, 70 + grid, 105 + grid, 255];
   });
   const sprite = createPng(240, 480, (x, y) => {
@@ -113,4 +113,3 @@ export async function writeDummyAssets(outputRoot) {
     writeFile(paths.voice, createWave({ durationMs: 320, frequency: 330, volume: 0.05 }))
   ]);
 }
-
