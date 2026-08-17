@@ -88,8 +88,7 @@ export async function writeDummyAssets(outputRoot) {
     sprite: path.join(outputRoot, "assets/sprite/dummy-character.png"),
     bgm: path.join(outputRoot, "assets/bgm/dummy-bgm.wav"),
     se: path.join(outputRoot, "assets/se/dummy-se.wav"),
-    voice: path.join(outputRoot, "assets/voice/dummy-voice.wav"),
-    systemWhite: path.join(outputRoot, "assets/system/white.png")
+    voice: path.join(outputRoot, "assets/voice/dummy-voice.wav")
   };
   await Promise.all(Object.values(paths).map((file) => mkdir(path.dirname(file), { recursive: true })));
 
@@ -105,12 +104,9 @@ export async function writeDummyAssets(outputRoot) {
     if (!head && !body) return [0, 0, 0, 0];
     return head ? [245, 208, 185, 255] : [180, 80, 130, 255];
   });
-  const systemWhite = createPng(640, 480, () => [255, 255, 255, 255]);
-
   await Promise.all([
     writeFile(paths.background, background),
     writeFile(paths.sprite, sprite),
-    writeFile(paths.systemWhite, systemWhite),
     writeFile(paths.bgm, createWave({ durationMs: 1200, frequency: 220, volume: 0.025 })),
     writeFile(paths.se, createWave({ durationMs: 120, frequency: 660, volume: 0.08 })),
     writeFile(paths.voice, createWave({ durationMs: 320, frequency: 330, volume: 0.05 }))
