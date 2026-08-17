@@ -14,6 +14,8 @@ function syntheticPair() {
     "#entrypoint 000 // S00",
     "intF[12] = 1",
     "bgmLoop('BGM01')",
+    "msgHide",
+    "grpOpenBg('BG053', 0)",
     "#res<0001>",
     "pause",
     "wait(250)",
@@ -42,7 +44,17 @@ test("Kprl decoder joins numbered resources without discarding source provenance
   assert.deepEqual(decoded.scenario.characters, ["Guide"]);
   assert.deepEqual(
     scenario.commands.map((command) => command.kind),
-    ["label", "variable.set", "unknown", "text", "unknown", "unknown", "unknown"]
+    [
+      "label",
+      "variable.set",
+      "bgm.play",
+      "kanon.message.hide",
+      "kanon.background.open",
+      "text",
+      "kanon.message.pause",
+      "unknown",
+      "unknown"
+    ]
   );
 
   const assignment = scenario.commands[1];
@@ -50,16 +62,31 @@ test("Kprl decoder joins numbered resources without discarding source provenance
   assert.equal(assignment.payload.index, 12);
   assert.equal(assignment.payload.value, 1);
 
-  const text = scenario.commands[3];
+  const text = scenario.commands[5];
   assert.equal(text.payload.speaker, "Guide");
   assert.equal(text.payload.text, "Synthetic line");
   assert.equal(text.payload.resourceId, "0001");
   assert.equal(text.payload.resourceSource.file, "SCENE0001.utf");
   assert.equal(text.payload.requiresTextLayoutVerification, true);
+  assert.equal(text.payload.usesTextWindow, true);
+  assert.equal(text.payload.advanceMode, "kanon.pause");
 
   const bgm = scenario.commands[2];
-  assert.equal(bgm.payload.proposedKind, "kanon.kprl.bgmLoop");
+  assert.equal(bgm.payload.asset.logicalId, "kanon.bgm.BGM01");
+  assert.equal(bgm.payload.loop, true);
   assert.deepEqual(bgm.source.rawArguments, [{ type: "string", value: "BGM01", raw: "'BGM01'" }]);
+
+  const background = scenario.commands[4];
+  assert.equal(background.payload.asset.logicalId, "kanon.background.BG053");
+  assert.equal(background.payload.effectCode, 0);
+  assert.equal(background.payload.transitionMethod, "crossfade");
+  assert.equal(background.payload.durationMs, 500);
+  assert.equal(background.payload.sourceColor, "white");
+  assert.equal(background.payload.verifiedBehavior, true);
+
+  const pause = scenario.commands[6];
+  assert.equal(pause.payload.mode, "txtwindow");
+  assert.equal(pause.payload.clearTextAfterClick, true);
 
   const expectedOffset = Buffer.byteLength(input.disassembly.slice(0, input.disassembly.indexOf("bgmLoop")), "utf8");
   assert.equal(bgm.source.offset, expectedOffset);
@@ -74,6 +101,7 @@ test("Kprl decoder retains unresolved speaker macros and unknown mnemonics", () 
     "#resource 'SCENE0002.utf'",
     "#entrypoint 000 // S00",
     "#res<0001>",
+    "grpOpenBg('UNVERIFIED', 0)",
     "unseenCommand(3)"
   ].join("\n");
   const resources = "<0001> \\{\\m{A}}Synthetic macro line\n";
@@ -87,8 +115,11 @@ test("Kprl decoder retains unresolved speaker macros and unknown mnemonics", () 
   assert.equal(scenario.commands[1].payload.speaker, undefined);
   assert.equal(scenario.commands[1].payload.speakerExpression, "\\m{A}");
   assert.equal(scenario.commands[2].kind, "unknown");
-  assert.equal(scenario.commands[2].payload.proposedKind, "kanon.kprl.unseenCommand");
-  assert.deepEqual(scenario.commands[2].source.rawArguments, [{ type: "integer", value: 3, raw: "3" }]);
+  assert.equal(scenario.commands[2].payload.proposedKind, "kanon.kprl.grpOpenBg");
+  assert.equal(scenario.commands[2].payload.decodedPayload.effectCode, 0);
+  assert.equal(scenario.commands[3].kind, "unknown");
+  assert.equal(scenario.commands[3].payload.proposedKind, "kanon.kprl.unseenCommand");
+  assert.deepEqual(scenario.commands[3].source.rawArguments, [{ type: "integer", value: 3, raw: "3" }]);
 });
 
 test("Kprl decoder fails when a referenced resource is absent", () => {
