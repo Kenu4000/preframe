@@ -4,7 +4,6 @@ import { commandTraceSummary } from "../kanon/trace.js";
 const visualKinds = new Set(["background.show", "sprite.show", "sprite.hide"]);
 const supportedTransitionMethods = new Set(["crossfade", "universal", "scroll"]);
 const supportedPositions = new Set(["left", "left_center", "center", "right_center", "right"]);
-const whiteRuntimeStorage = "assets/system/white.png";
 
 export class UnsupportedKanonCommandError extends Error {
   constructor(command, message = `KAG emitter cannot reproduce command kind: ${command.kind}`) {
@@ -201,7 +200,6 @@ export class KagEmitter {
       !payload.verifiedBehavior ||
       payload.effectCode !== 0 ||
       payload.transitionMethod !== "crossfade" ||
-      payload.sourceColor !== "white" ||
       payload.durationMs !== 500
     ) {
       throw new UnsupportedKanonCommandError(
@@ -212,10 +210,9 @@ export class KagEmitter {
 
     const storage = this.assets.resolve(payload.asset);
     return [
-      `@image storage=\"${whiteRuntimeStorage}\" layer=base page=fore`,
-      "@backlay",
+      "@backlay layer=base",
       `@image storage=\"${storage}\" layer=base page=back`,
-      `@trans method=crossfade time=${payload.durationMs} layer=base children=true`,
+      `@trans method=crossfade time=${payload.durationMs} layer=base children=false`,
       "@wt"
     ];
   }
@@ -257,8 +254,28 @@ export class KagEmitter {
         return [`@wait time=${Math.round(payload.durationMs)} canskip=${Boolean(payload.skippable)}`];
       case "transition":
         return this.#emitTransition(command);
+      case "kanon.bgm.fadeOut":
+        if (payload.durationUnit !== "ms" || payload.durationUnitVerified !== true) {
+          throw new UnsupportedKanonCommandError(command, "bgmFadeOut duration unit is not verified");
+        }
+        return [`@fadeoutbgm time=${payload.rawDuration}`];
       case "kanon.message.hide":
-        return ["@layopt layer=message0 page=fore visible=false"];
+        if (
+          payload.verifiedBehavior !== true ||
+          payload.transitionMethod !== "crossfade" ||
+          payload.durationMs !== 200 ||
+          payload.target !== "message0"
+        ) {
+          throw new UnsupportedKanonCommandError(command, "unverified msgHide behavior");
+        }
+        return [
+          "@backlay layer=message0",
+          "@layopt layer=message0 page=back opacity=0",
+          "@trans method=crossfade time=200 layer=message0",
+          "@wt",
+          "@layopt layer=message0 page=fore visible=false opacity=255",
+          "@layopt layer=message0 page=back visible=false opacity=255"
+        ];
       case "kanon.message.pause":
         if (payload.mode !== "txtwindow" || payload.clearTextAfterClick !== true) {
           throw new UnsupportedKanonCommandError(command, "unverified Kanon pause behavior");
