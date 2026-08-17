@@ -58,3 +58,74 @@ test("KAG emitter refuses Kprl text until its layout is verified", () => {
     /Kprl text layout or speaker expression must be verified/
   );
 });
+
+test("KAG emitter reproduces the verified opening background and txtwindow controls", () => {
+  const decoded = new JsonDecodedRecordDecoder().decode({
+    schemaVersion: 1,
+    sourceFile: "SYNTHETIC.org",
+    scenario: { id: "verified-opening", entryLabel: "start" },
+    records: [
+      { offset: 0, opcode: "#entrypoint", rawArguments: [], decodedKind: "label", payload: { name: "start" } },
+      {
+        offset: 10,
+        opcode: "bgmLoop",
+        rawArguments: [{ type: "string", value: "BGM16" }],
+        decodedKind: "bgm.play",
+        payload: {
+          asset: { kind: "bgm", logicalId: "kanon.bgm.BGM16", originalId: "BGM16" },
+          loop: true
+        }
+      },
+      { offset: 20, opcode: "msgHide", rawArguments: [], decodedKind: "kanon.message.hide", payload: {} },
+      {
+        offset: 30,
+        opcode: "grpOpenBg",
+        rawArguments: [{ type: "string", value: "BG053" }, { type: "integer", value: 0 }],
+        decodedKind: "kanon.background.open",
+        payload: {
+          asset: { kind: "background", logicalId: "kanon.background.BG053", originalId: "BG053" },
+          effectCode: 0,
+          verifiedBehavior: true,
+          transitionMethod: "crossfade",
+          durationMs: 500,
+          sourceColor: "white"
+        }
+      },
+      {
+        offset: 40,
+        opcode: "pause",
+        rawArguments: [],
+        decodedKind: "kanon.message.pause",
+        payload: { mode: "txtwindow", clearTextAfterClick: true }
+      }
+    ]
+  });
+  const assets = new KanonAssetCatalog({
+    schemaVersion: 1,
+    assets: [
+      {
+        kind: "bgm",
+        logicalId: "kanon.bgm.BGM16",
+        originalId: "BGM16",
+        runtimeStorage: "assets/bgm/BGM16.ogg"
+      },
+      {
+        kind: "background",
+        logicalId: "kanon.background.BG053",
+        originalId: "BG053",
+        runtimeStorage: "assets/background/BG053.png"
+      }
+    ]
+  });
+  const output = new KagEmitter(assets).emitScenario(new KanonParser().parse(decoded));
+
+  const bgm = output.indexOf('@playbgm storage="assets/bgm/BGM16.ogg" loop=true');
+  const hide = output.indexOf("@layopt layer=message0 page=fore visible=false", bgm);
+  const white = output.indexOf('@image storage="assets/system/white.png" layer=base page=fore', hide);
+  const backlay = output.indexOf("@backlay", white);
+  const background = output.indexOf('@image storage="assets/background/BG053.png" layer=base page=back', backlay);
+  const transition = output.indexOf("@trans method=crossfade time=500", background);
+  const pause = output.indexOf("[p][cm]", transition);
+  assert.ok(bgm >= 0 && hide > bgm && white > hide && backlay > white && background > backlay);
+  assert.ok(transition > background && pause > transition);
+});
