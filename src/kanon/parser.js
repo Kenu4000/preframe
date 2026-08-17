@@ -104,6 +104,15 @@ export class KanonParser {
           requireString("transitionMethod");
         }
         break;
+      case "kanon.bgm.fadeOut":
+        if (!Number.isSafeInteger(payload.rawDuration) || payload.rawDuration < 0) {
+          throw new KanonModelError("kanon.bgm.fadeOut.rawDuration must be a non-negative integer");
+        }
+        break;
+      case "kanon.message.hide":
+        requireNonNegative("durationMs");
+        requireString("transitionMethod");
+        break;
       case "variable.set":
       case "flag.set":
         requireString("name");
