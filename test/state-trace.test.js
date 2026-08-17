@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import { reduceScenarioLinearly } from "../src/kanon/state.js";
 import { renderScenarioTrace } from "../src/kanon/trace.js";
 import { loadDummy } from "../test-support/helpers.js";
+import { JsonDecodedRecordDecoder } from "../src/kanon/decoder.js";
+import { KanonParser } from "../src/kanon/parser.js";
 
 test("state reducer exposes the expected final Kanon state", async () => {
   const { scenario } = await loadDummy();
@@ -26,4 +28,51 @@ test("trace redacts scenario text by default and can include it explicitly", asy
   assert.doesNotMatch(redacted, /これは原作データ/);
   assert.match(full, /これは原作データを含まない合成シーンです/);
   assert.match(redacted, /DUMMY_CONTROL\.DATA:0x00000060/);
+});
+
+test("verified Kanon opening commands update visible state explicitly", () => {
+  const decoded = new JsonDecodedRecordDecoder().decode({
+    schemaVersion: 1,
+    sourceFile: "SYNTHETIC.org",
+    scenario: { id: "verified-state", entryLabel: "start" },
+    records: [
+      { offset: 0, opcode: "#entrypoint", rawArguments: [], decodedKind: "label", payload: { name: "start" } },
+      { offset: 1, opcode: "msgHide", rawArguments: [], decodedKind: "kanon.message.hide", payload: {} },
+      {
+        offset: 2,
+        opcode: "grpOpenBg",
+        rawArguments: [],
+        decodedKind: "kanon.background.open",
+        payload: {
+          asset: { kind: "background", logicalId: "kanon.background.BG053", originalId: "BG053" },
+          effectCode: 0,
+          verifiedBehavior: true,
+          transitionMethod: "crossfade",
+          durationMs: 500,
+          sourceColor: "white"
+        }
+      },
+      {
+        offset: 3,
+        opcode: "#res",
+        rawArguments: [],
+        decodedKind: "text",
+        payload: { text: "Synthetic line", usesTextWindow: true, advanceMode: "kanon.pause" }
+      },
+      {
+        offset: 4,
+        opcode: "pause",
+        rawArguments: [],
+        decodedKind: "kanon.message.pause",
+        payload: { mode: "txtwindow", clearTextAfterClick: true }
+      }
+    ]
+  });
+  const state = reduceScenarioLinearly(new KanonParser().parse(decoded));
+  assert.equal(state.visual.background.logicalId, "kanon.background.BG053");
+  assert.equal(state.transition.last.kanonEffectCode, 0);
+  assert.equal(state.transition.last.durationMs, 500);
+  assert.equal(state.timing.elapsedRequestedMs, 500);
+  assert.equal(state.ui.messageVisible, true);
+  assert.equal(state.ui.lastMessage, null);
 });
