@@ -16,6 +16,18 @@
 
 テンプレート側に既存の `first.ks` がある場合は上書きせず、生成された `scenario/dummy.ks` を既存シナリオから `[call storage="scenario/dummy.ks"]` で呼び出します。
 
+## 実データ診断プレビュー
+
+Windowsではリポジトリ直下から次を実行します。
+
+```console
+npm.cmd run test:kanon
+```
+
+このコマンドは、テストとローカルアセット検査に成功した場合だけ、`.org/.utf` から現在対応できる命令をKAGへ変換し、参照された原作アセットだけを `cache/kanon/preview/` へコピーします。その後、生成した `data/` を `runtime/local/kirikiri/data/` へ重ね、`tvpwin64.exe`を起動します。既存の `startup.tjs` は削除しません。
+
+未確定命令は診断プレビュー内でだけ飛ばし、`preview-report.json`へ記録します。通常のEmitterが未知命令を拒否する挙動は変更しません。画面に出た部分は「現在実装済みの範囲」であり、飛ばした命令の前後関係まで原作どおりであることは保証しません。
+
 ## TJS拡張
 
 `extensions/` は、KAG標準タグで原作挙動を表現できないことが実測で確定した処理だけを置きます。現段階では空です。KAGタグやTJS関数をKanon命令モデルへ逆流させません。

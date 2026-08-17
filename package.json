@@ -8,8 +8,11 @@
   },
   "scripts": {
     "build:dummy": "node src/cli/build-dummy.js",
+    "build:preview": "node src/cli/build-kprl-preview.js --auto",
     "import:kprl": "node src/cli/import-kprl.js",
     "validate:assets": "node src/cli/validate-local-assets.js",
+    "preview:kanon": "node src/cli/build-kprl-preview.js --auto --deploy --launch",
+    "test:kanon": "npm run verify && npm run validate:assets && npm run preview:kanon",
     "check": "node src/cli/check.js",
     "test": "node --test",
     "verify": "npm run check && npm test && npm run build:dummy"

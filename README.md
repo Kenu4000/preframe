@@ -57,11 +57,21 @@ state/dummy.final-state.json
 
 原作データは `private/` のみで扱い、Gitには入りません。ファイル名や配置を変更する前提も置かず、ローカル設定から参照します。詳細は [docs/original-data-layout.md](docs/original-data-layout.md) を参照してください。
 
-`private/kanon_original/` へ配置したシナリオ、BMP、NWA、WAVは、内容を外部へ送らず次のコマンドで検査できます。
+`private/kanon_original/` へ配置したシナリオ、BMP、WAVは、内容を外部へ送らず次のコマンドで検査できます。
 
 ```console
 npm run validate:assets
 ```
+
+## 実データ診断プレビュー（Windows）
+
+`private/kanon_original/scenario/` に `.org` と同名の `.utf` が1組だけある場合、次の1コマンドで自動テスト、原作アセット検査、実データのKAG生成、ローカルKiriKiriへの配置、`tvpwin64.exe`の起動まで行います。
+
+```console
+npm.cmd run test:kanon
+```
+
+これは現在の再現範囲を見るための診断プレビューです。未確定命令、未実装のOP開始、解決できないアセット参照は、元位置・opcode・理由を `cache/kanon/preview/<scene>/preview-report.json` に残して飛ばします。本文は暫定txtwindowで表示し、未解決の話者式は省略します。通常のKAG生成は引き続き未確定命令で停止するため、このプレビューを忠実再現済みとは扱いません。
 
 ## 次の実装入力
 
