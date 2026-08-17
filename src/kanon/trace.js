@@ -42,8 +42,10 @@ export function commandTraceSummary(command, { includeText = false } = {}) {
       return `TRANSITION ${payload.method} ${payload.durationMs}ms wait=${payload.wait !== false}`;
     case "kanon.background.open":
       return `KANON_GRP_OPEN_BG ${payload.asset.logicalId} effect=${payload.effectCode} verified=${Boolean(payload.verifiedBehavior)}`;
+    case "kanon.bgm.fadeOut":
+      return `KANON_BGM_FADE_OUT rawDuration=${payload.rawDuration} unit=${payload.durationUnit} verified=${Boolean(payload.durationUnitVerified)}`;
     case "kanon.message.hide":
-      return "KANON_MSG_HIDE";
+      return `KANON_MSG_HIDE ${payload.durationMs}ms method=${payload.transitionMethod}`;
     case "kanon.message.pause":
       return "KANON_PAUSE clear=true";
     case "jump":
