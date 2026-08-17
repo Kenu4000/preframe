@@ -22,7 +22,17 @@
       "portBehavior": "KAG出力と生成アセットの静的検査まで完了できる",
       "evidence": "リポジトリにKiriKiri/KAG本体を同梱していない",
       "verification": "Windows上の採用KAGテンプレートへ生成物を配置し、first.ksから通し再生する"
+    },
+    {
+      "id": "KF-0003",
+      "title": "ダミー背景とKAG3標準画面の解像度不一致",
+      "status": "fixed",
+      "severity": "high",
+      "scope": "runtime",
+      "originalBehavior": "表裏の背景レイヤが640x480で一致し、crossfadeを開始できる",
+      "portBehavior": "当初はダミー背景だけが800x600で、transタグがサイズ不一致エラーになった。640x480へ修正済み",
+      "evidence": "Windows実機でscenario/dummy.ks 15行目のtransタグが800x600対640x480の不一致を報告",
+      "verification": "生成PNGのIHDRが640x480であることを自動テストし、Windows実機でcrossfadeを再確認する"
     }
   ]
 }
-
