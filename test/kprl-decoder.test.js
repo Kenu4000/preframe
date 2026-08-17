@@ -15,7 +15,7 @@ function syntheticPair() {
     "intF[12] = 1",
     "bgmLoop('BGM01')",
     "msgHide",
-    "grpOpenBg('BG053', 0)",
+    "grpOpenBg('FGNY02A', 0)",
     "#res<0001>",
     "pause",
     "bgmFadeOut(1200)",
@@ -79,7 +79,7 @@ test("Kprl decoder joins numbered resources without discarding source provenance
   assert.deepEqual(bgm.source.rawArguments, [{ type: "string", value: "BGM01", raw: "'BGM01'" }]);
 
   const background = scenario.commands[4];
-  assert.equal(background.payload.asset.logicalId, "kanon.background.BG053");
+  assert.equal(background.payload.asset.logicalId, "kanon.background.FGNY02A");
   assert.equal(background.payload.effectCode, 0);
   assert.equal(background.payload.transitionMethod, "crossfade");
   assert.equal(background.payload.durationMs, 500);
