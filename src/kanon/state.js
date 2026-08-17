@@ -58,7 +58,13 @@ export class KanonStateMachine {
         }
         break;
       case "bgm.play":
-        state.audio.bgm = { asset: structuredClone(command.payload.asset), loop: command.payload.loop !== false };
+        state.audio.bgm = {
+          asset: structuredClone(command.payload.asset),
+          loop: command.payload.loop !== false,
+          status: "playing",
+          stopTrigger: command.payload.stopTrigger ?? null,
+          fadeOut: null
+        };
         break;
       case "bgm.stop":
         state.audio.bgm = null;
@@ -105,8 +111,27 @@ export class KanonStateMachine {
           state.timing.elapsedRequestedMs += command.payload.durationMs;
         }
         break;
+      case "kanon.bgm.fadeOut":
+        if (state.audio.bgm) {
+          state.audio.bgm.status = "fading-out";
+          state.audio.bgm.fadeOut = {
+            rawDuration: command.payload.rawDuration,
+            durationUnit: command.payload.durationUnit,
+            durationUnitVerified: Boolean(command.payload.durationUnitVerified),
+            stopsAfterFade: command.payload.stopsAfterFade === true
+          };
+        }
+        break;
       case "kanon.message.hide":
         state.ui.messageVisible = false;
+        state.transition.last = {
+          method: command.payload.transitionMethod,
+          durationMs: command.payload.durationMs,
+          wait: true,
+          target: "message0",
+          verifiedBehavior: Boolean(command.payload.verifiedBehavior)
+        };
+        state.timing.elapsedRequestedMs += command.payload.durationMs;
         break;
       case "kanon.message.pause":
         state.ui.lastMessage = null;
