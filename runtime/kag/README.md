@@ -14,6 +14,8 @@
 4. 背景、立ち絵、短い合成音、メッセージが順に処理されることを確認する。
 5. `cache/kanon/kag-data/trace/dummy.trace.log` と画面順序を照合する。
 
+`assets/system/white.png` は、Kanon冒頭で確認した白画面から背景へのcrossfade用に生成するランタイム資産です。原作由来の画像ではありません。
+
 テンプレート側に既存の `first.ks` がある場合は上書きせず、生成された `scenario/dummy.ks` を既存シナリオから `[call storage="scenario/dummy.ks"]` で呼び出します。
 
 ## TJS拡張
