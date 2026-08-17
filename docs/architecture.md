@@ -18,6 +18,8 @@ Kanon固有のScenario、Command、SourceLocation、AssetReferenceを定義し�
 
 シナリオ位置、変数、フラグ、表示レイヤ、BGM、SE、Voice、トランジション、UI状態を保持します。KAGの内部状態を正とせず、Kanon側の期待状態を比較可能にします。
 
+`reduceScenarioLinearly` は分岐のない合成fixture用の検査補助です。jumpやchoiceを解決する実ゲームExecutorではありません。実制御フローはopcodeのアドレス規則と条件評価が判明してから別に実装します。
+
 ### `src/runtime/kag-emitter.js`
 
 対応済みのKanon命令をKAG3タグへ変換する出力Adapterです。未知命令は既定でビルドエラーにし、黙って欠落させません。
@@ -31,4 +33,3 @@ KAG3のトランジションは、表ページを `[backlay]` で裏ページへ
 ## TJS
 
 現段階のダミー再生はKAG標準タグだけで表現できます。そのため未確認のKanon挙動を先回りしてTJSへ固定していません。KAGだけで再現できない挙動が判明した時点で、`runtime/kag/extensions/` に作品固有TJSを追加し、対応するCommandのEmitterだけがそれを呼び出します。
-
