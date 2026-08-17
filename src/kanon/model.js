@@ -13,6 +13,7 @@ export const KANON_COMMAND_KINDS = Object.freeze([
   "wait",
   "transition",
   "kanon.background.open",
+  "kanon.bgm.fadeOut",
   "kanon.message.hide",
   "kanon.message.pause",
   "variable.set",
