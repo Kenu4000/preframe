@@ -52,8 +52,8 @@
       "severity": "high",
       "scope": "ui-text",
       "originalBehavior": "原作txtwindowに名前と本文を所定の書体、位置、速度で表示し、クリック後に本文を消す",
-      "portBehavior": "クリック待ち、本文消去、message layer表示状態、約0.20秒のhide transitionに加え、録画から推定した濃紺半透明の暫定txtwindow位置・寸法・余白・白文字を実装した。フレーム装飾、正確な色・透明度・書体・文字配置、speaker markup、m macroが未確定なため実本文のKAG出力は引き続き停止する",
-      "evidence": "pause後に文章が消えるtxtwindow方式とhide transition時間は実機録画で確認済みだが、表示規則の詳細は未取得",
+      "portBehavior": "クリック待ち、本文消去、message layer表示状態、約0.20秒のhide transitionに加え、録画から推定した濃紺半透明の暫定txtwindow位置・寸法・余白・白文字を実装した。単純なspeaker markupは本文と同じ行へ出力する。フレーム装飾、正確な色・透明度・書体・文字配置、m macroが未確定なため通常の実本文KAG出力は引き続き停止する",
+      "evidence": "pause後に文章が消えるtxtwindow方式とhide transition時間を実機録画で確認し、実データの\\{女の子}「……」が改行・分割されず同じ行に出ることをユーザー確認から確定",
       "verification": "合成文を用いたtxtwindowを原作と比較し、名前欄、本文領域、書体、行間、表示速度、クリック記号を個別に確認する"
     },
     {

@@ -254,7 +254,11 @@ export class KagEmitter {
             "Kprl text layout or speaker expression must be verified before KAG emission"
           );
         }
-        const speaker = payload.speaker ? `【${escapeKagText(payload.speaker)}】[r]` : "";
+        const speaker = payload.speaker
+          ? payload.speakerPresentation === "inline-prefix"
+            ? escapeKagText(payload.speaker)
+            : `【${escapeKagText(payload.speaker)}】[r]`
+          : "";
         const waitTag = payload.advanceMode === "kanon.pause" ? "" : payload.pageBreak === false ? "[l]" : "[p]";
         return [
           ...(payload.usesTextWindow ? this.#emitKanonTextWindowSetup() : []),

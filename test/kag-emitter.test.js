@@ -71,6 +71,36 @@ test("KAG emitter refuses Kprl text until its layout is verified", () => {
   );
 });
 
+test("KAG emitter keeps a Kprl inline speaker and dialogue on the same line", () => {
+  const decoded = new JsonDecodedRecordDecoder().decode({
+    schemaVersion: 1,
+    sourceFile: "SYNTHETIC.org",
+    scenario: { id: "inline-speaker", entryLabel: "start" },
+    records: [
+      { offset: 0, opcode: "#entrypoint", rawArguments: [], decodedKind: "label", payload: { name: "start" } },
+      {
+        offset: 10,
+        opcode: "#res",
+        rawArguments: [{ type: "resourceRef", value: "0017" }],
+        decodedKind: "text",
+        payload: {
+          speaker: "女の子",
+          speakerPresentation: "inline-prefix",
+          text: "「……」",
+          requiresTextLayoutVerification: false,
+          usesTextWindow: true,
+          advanceMode: "kanon.pause"
+        }
+      }
+    ]
+  });
+  const output = new KagEmitter(new KanonAssetCatalog({ schemaVersion: 1, assets: [] })).emitScenario(
+    new KanonParser().parse(decoded)
+  );
+  assert.match(output, /\[current layer=message0 page=fore\]女の子「……」/u);
+  assert.doesNotMatch(output, /女の子.*\[r\].*「……」/u);
+});
+
 test("KAG emitter reproduces the verified opening background and txtwindow controls", () => {
   const decoded = new JsonDecodedRecordDecoder().decode({
     schemaVersion: 1,
