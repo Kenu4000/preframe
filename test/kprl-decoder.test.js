@@ -192,4 +192,54 @@ test("Kprl decoder fails when a referenced resource is absent", () => {
       ),
     /resource 9999.*is missing/
   );
+
+  const diagnostic = new KanonParser().parse(
+    new KprlDisassemblyDecoder().decode(
+      { disassembly, resources: "<0001> Synthetic line\n" },
+      {
+        sourceFile: "SCENE0003.org",
+        resourceFile: "SCENE0003.utf",
+        allowMissingResources: true
+      }
+    )
+  );
+  assert.equal(diagnostic.commands[1].kind, "unknown");
+  assert.equal(diagnostic.commands[1].payload.proposedKind, "kanon.kprl.missingResourceText");
+  assert.equal(diagnostic.commands[1].payload.decodedPayload.resourceId, "9999");
+});
+
+test("Kprl decoder resolves asset ids assembled by the cut SEEN0070 object sequence", () => {
+  const disassembly = [
+    "#file 'SEEN0070.TXT'",
+    "#resource 'SEEN0070.utf'",
+    "#entrypoint 000 // S00",
+    "intF[3] = 7",
+    "strS[1000] = 'BG003a'",
+    "grpBuffer(strS[1000], 2)",
+    "strS[1004] = 'SDT01'",
+    "strS[0] = itoa(intF[3], 2)",
+    "strS[1004] += strS[0]",
+    "objBgOfFile(84, strS[1004], 1)",
+    "objBgMove(84, 8, 8)",
+    "grpMulti(2, 0)",
+    "wavPlay('ROUKA')"
+  ].join("\n");
+  const scenario = new KanonParser().parse(
+    new KprlDisassemblyDecoder().decode(
+      { disassembly, resources: "// no resources\n" },
+      { sourceFile: "SEEN0070.org", resourceFile: "SEEN0070.utf" }
+    )
+  );
+  const byOpcode = new Map(scenario.commands.map((command) => [command.source.opcode, command]));
+
+  assert.equal(
+    byOpcode.get("grpBuffer").payload.decodedPayload.candidateAsset.logicalId,
+    "kanon.background.BG003a"
+  );
+  assert.equal(byOpcode.get("append").payload.decodedPayload.diagnosticResolvedValue, "SDT0107");
+  assert.equal(
+    byOpcode.get("objBgOfFile").payload.decodedPayload.candidateAsset.logicalId,
+    "kanon.sprite.SDT0107"
+  );
+  assert.equal(byOpcode.get("wavPlay").payload.decodedPayload.candidateAsset.logicalId, "kanon.se.ROUKA");
 });

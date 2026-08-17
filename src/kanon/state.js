@@ -47,7 +47,9 @@ export class KanonStateMachine {
       case "sprite.show":
         state.visual.sprites[command.payload.slot] = {
           asset: structuredClone(command.payload.asset),
-          position: command.payload.position,
+          position: command.payload.position ?? null,
+          x: command.payload.x ?? null,
+          y: command.payload.y ?? null,
           layer: command.payload.layer,
           opacity: command.payload.opacity ?? 255,
           visible: true

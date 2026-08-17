@@ -213,6 +213,39 @@ function scenarioIdFromJumpNumber(sceneNumber) {
   return `SEEN${String(sceneNumber).padStart(4, "0")}`;
 }
 
+function variableKey(bank, index) {
+  return `${bank}[${index}]`;
+}
+
+function resolveConstantArgument(argument, constants) {
+  if (["string", "integer"].includes(argument.type)) return argument.value;
+  const reference = argument.value.match(/^([A-Za-z_][A-Za-z0-9_]*)\[([+-]?\d+)\]$/u);
+  return reference ? constants.get(variableKey(reference[1], Number(reference[2]))) : undefined;
+}
+
+function candidateAssetsForCall(mnemonic, rawArguments, constants) {
+  const references = [];
+  const add = (kind, originalId) => {
+    if (typeof originalId !== "string" || originalId.length === 0) return;
+    const reference = logicalAssetReference(kind, originalId);
+    if (!references.some((item) => item.logicalId === reference.logicalId)) references.push(reference);
+  };
+
+  if (mnemonic === "wavPlay") add("se", resolveConstantArgument(rawArguments[0], constants));
+  if (mnemonic === "recOpenBg") add("background", resolveConstantArgument(rawArguments[0], constants));
+  if (mnemonic === "grpBuffer") add("background", resolveConstantArgument(rawArguments[0], constants));
+  if (mnemonic === "objBgOfFile") add("sprite", resolveConstantArgument(rawArguments[1], constants));
+  if (mnemonic === "grpMulti") {
+    add("background", resolveConstantArgument(rawArguments[0], constants));
+    for (const argument of rawArguments) {
+      if (argument.type !== "expression") continue;
+      const copiedAsset = argument.value.match(/^copy\('([^']+)'\s*,/u);
+      if (copiedAsset) add("background", copiedAsset[1]);
+    }
+  }
+  return references;
+}
+
 function unknownRecord(source, sourceFile, mnemonic, rawArguments, payload = {}) {
   return {
     sourceFile,
@@ -239,6 +272,7 @@ export class KprlDisassemblyDecoder extends KanonDecoder {
     const resourceFile = context.resourceFile ?? "scenario.utf";
     const parsedResources = parseResources(resourceText, resourceFile);
     const records = [];
+    const constants = new Map();
     const metadata = {
       format: "kprl-disassembly",
       disassembler: null,
@@ -302,6 +336,18 @@ export class KprlDisassemblyDecoder extends KanonDecoder {
         const id = resourceReference[1];
         const resource = parsedResources.resources.get(id);
         if (!resource) {
+          if (context.allowMissingResources === true) {
+            records.push(
+              unknownRecord(
+                source,
+                sourceFile,
+                "missingResourceText",
+                [{ type: "resourceRef", value: id, raw: `#res<${id}>` }],
+                { resourceId: id, reason: "resource-missing-from-diagnostic-input" }
+              )
+            );
+            continue;
+          }
           throw new KanonModelError(`Kprl resource ${id} referenced at ${sourceFile}:${source.lineNumber} is missing`);
         }
         const message = parseMessageMarkup(resource.value);
@@ -342,6 +388,7 @@ export class KprlDisassemblyDecoder extends KanonDecoder {
           value
         ];
         if (Number.isSafeInteger(index) && ["integer", "string"].includes(value.type)) {
+          constants.set(variableKey(bank, index), value.value);
           records.push({
             sourceFile,
             offset: source.byteOffset,
@@ -354,8 +401,64 @@ export class KprlDisassemblyDecoder extends KanonDecoder {
             line: source.lineNumber
           });
         } else {
-          records.push(unknownRecord(source, sourceFile, "assign", rawArguments, { bank, index }));
+          let resolvedValue;
+          if (value.type === "expression") {
+            const formattedInteger = value.value.match(
+              /^itoa\(([A-Za-z_][A-Za-z0-9_]*)\[([+-]?\d+)\]\s*,\s*(\d+)\)$/u
+            );
+            if (formattedInteger) {
+              const sourceValue = constants.get(variableKey(formattedInteger[1], Number(formattedInteger[2])));
+              const width = Number(formattedInteger[3]);
+              if (Number.isSafeInteger(sourceValue) && Number.isSafeInteger(width) && width >= 0) {
+                resolvedValue = String(sourceValue).padStart(width, "0");
+                constants.set(variableKey(bank, index), resolvedValue);
+              }
+            }
+          }
+          if (resolvedValue === undefined) constants.delete(variableKey(bank, index));
+          records.push(
+            unknownRecord(source, sourceFile, "assign", rawArguments, {
+              bank,
+              index,
+              ...(resolvedValue === undefined ? {} : { diagnosticResolvedValue: resolvedValue })
+            })
+          );
         }
+        continue;
+      }
+
+      const append = code.match(
+        /^([A-Za-z_][A-Za-z0-9_]*)\[([+-]?\d+)\]\s*\+=\s*([A-Za-z_][A-Za-z0-9_]*)\[([+-]?\d+)\]$/u
+      );
+      if (append) {
+        const targetBank = append[1];
+        const targetIndex = Number(append[2]);
+        const sourceBank = append[3];
+        const sourceIndex = Number(append[4]);
+        const targetValue = constants.get(variableKey(targetBank, targetIndex));
+        const sourceValue = constants.get(variableKey(sourceBank, sourceIndex));
+        const resolvedValue =
+          targetValue === undefined || sourceValue === undefined ? undefined : `${targetValue}${sourceValue}`;
+        if (resolvedValue === undefined) constants.delete(variableKey(targetBank, targetIndex));
+        else constants.set(variableKey(targetBank, targetIndex), resolvedValue);
+        records.push(
+          unknownRecord(
+            source,
+            sourceFile,
+            "append",
+            [
+              { type: "variable", value: variableKey(targetBank, targetIndex), raw: `${targetBank}[${targetIndex}]` },
+              { type: "variable", value: variableKey(sourceBank, sourceIndex), raw: `${sourceBank}[${sourceIndex}]` }
+            ],
+            {
+              targetBank,
+              targetIndex,
+              sourceBank,
+              sourceIndex,
+              ...(resolvedValue === undefined ? {} : { diagnosticResolvedValue: resolvedValue })
+            }
+          )
+        );
         continue;
       }
 
@@ -527,7 +630,12 @@ export class KprlDisassemblyDecoder extends KanonDecoder {
           continue;
         }
 
-        const payload = {};
+        const candidateAssets = candidateAssetsForCall(mnemonic, rawArguments, constants);
+        const payload = {
+          ...(candidateAssets.length > 0
+            ? { candidateAsset: candidateAssets[0], candidateAssets }
+            : {})
+        };
         if (mnemonic === "title" && rawArguments[0]?.type === "resourceRef") {
           const resource = parsedResources.resources.get(rawArguments[0].value);
           if (!resource) {
