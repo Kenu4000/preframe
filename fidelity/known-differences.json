@@ -41,9 +41,20 @@
       "severity": "blocking",
       "scope": "importer-runtime",
       "originalBehavior": "各Kprl命令が原作どおりの画面、音、入力、制御フローを実行する",
-      "portBehavior": "title、bgmLoop、msgHide、grpOpenBg、pause、bgmFadeOut、wait、farcall、jump、eof、haltを型付き引数とともにunknownとして保持し、KAG出力は失敗させる",
-      "evidence": "短縮サンプルから構文と命令順は得られたが、各引数の単位、同期性、状態変化、遷移先種別は示されていない",
+      "portBehavior": "bgmLoop、msgHide、pause、grpOpenBg('BG053',0)は確認済みのKanon固有命令へ昇格した。title、未確認のgrpOpenBg、bgmFadeOut、wait、farcall、jump、eof、haltはunknownのままKAG出力を停止する",
+      "evidence": "原作実機でBGMと背景が同時、BG053が白から約0.5秒でfade、背景切替前にmessage windowが非表示、pause後にtxtwindow本文が消えることを確認",
       "verification": "各命令について引数の意味と実機挙動を確認し、1命令ずつ回帰テストを追加してknownへ昇格する"
+    },
+    {
+      "id": "KF-0005",
+      "title": "原作txtwindowの外観とspeaker表現は未再現",
+      "status": "open",
+      "severity": "high",
+      "scope": "ui-text",
+      "originalBehavior": "原作txtwindowに名前と本文を所定の書体、位置、速度で表示し、クリック後に本文を消す",
+      "portBehavior": "クリック待ち、本文消去、message layer表示状態はモデル化済み。外観、文字配置、speaker markup、m macroが未確定なため実本文のKAG出力を停止する",
+      "evidence": "pause後に文章が消えるtxtwindow方式であることは実機確認済みだが、表示規則の詳細は未取得",
+      "verification": "合成文を用いたtxtwindowを原作と比較し、名前欄、本文領域、書体、行間、表示速度、クリック記号を個別に確認する"
     }
   ]
 }
