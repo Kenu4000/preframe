@@ -189,13 +189,12 @@ function logicalAssetReference(kind, originalId) {
 }
 
 function verifiedGrpOpenBgBehavior(originalId, effectCode) {
-  if (originalId === "BG053" && effectCode === 0) {
+  if (effectCode === 0) {
     return {
       verifiedBehavior: true,
       transitionMethod: "crossfade",
       durationMs: 500,
-      sourceColor: "white",
-      evidence: "observed-on-windows"
+      evidence: originalId === "FGNY02A" ? "measured-from-30fps-recording" : "verified-effect-code-0"
     };
   }
   return null;
@@ -361,7 +360,33 @@ export class KprlDisassemblyDecoder extends KanonDecoder {
             payload: {
               asset: logicalAssetReference("bgm", originalId),
               loop: true,
-              timingObservation: originalId === "BGM16" ? "same-frame-with-next-background" : null,
+              stopTrigger: "bgmFadeOut",
+              sourceLine: source.lineNumber
+            },
+            synthetic: false,
+            provenance: "kprl-disassembly",
+            line: source.lineNumber
+          });
+          continue;
+        }
+
+        if (
+          mnemonic === "bgmFadeOut" &&
+          rawArguments.length === 1 &&
+          rawArguments[0].type === "integer" &&
+          rawArguments[0].value >= 0
+        ) {
+          records.push({
+            sourceFile,
+            offset: source.byteOffset,
+            opcode: mnemonic,
+            rawArguments,
+            decodedKind: "kanon.bgm.fadeOut",
+            payload: {
+              rawDuration: rawArguments[0].value,
+              durationUnit: "unverified",
+              durationUnitVerified: false,
+              stopsAfterFade: true,
               sourceLine: source.lineNumber
             },
             synthetic: false,
@@ -435,7 +460,15 @@ export class KprlDisassemblyDecoder extends KanonDecoder {
             decodedKind: code === "msgHide" ? "kanon.message.hide" : "kanon.message.pause",
             payload: {
               sourceLine: source.lineNumber,
-              ...(code === "pause" ? { clearTextAfterClick: true, mode: "txtwindow" } : {})
+              ...(code === "pause"
+                ? { clearTextAfterClick: true, mode: "txtwindow" }
+                : {
+                    durationMs: 200,
+                    transitionMethod: "crossfade",
+                    target: "message0",
+                    verifiedBehavior: true,
+                    evidence: "measured-from-30fps-recording"
+                  })
             },
             synthetic: false,
             provenance: "kprl-disassembly",
