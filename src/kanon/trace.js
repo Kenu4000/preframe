@@ -40,6 +40,12 @@ export function commandTraceSummary(command, { includeText = false } = {}) {
       return `WAIT ${payload.durationMs}ms skippable=${Boolean(payload.skippable)}`;
     case "transition":
       return `TRANSITION ${payload.method} ${payload.durationMs}ms wait=${payload.wait !== false}`;
+    case "kanon.background.open":
+      return `KANON_GRP_OPEN_BG ${payload.asset.logicalId} effect=${payload.effectCode} verified=${Boolean(payload.verifiedBehavior)}`;
+    case "kanon.message.hide":
+      return "KANON_MSG_HIDE";
+    case "kanon.message.pause":
+      return "KANON_PAUSE clear=true";
     case "jump":
       return `JUMP ${payload.target}`;
     case "choice":
@@ -64,4 +70,3 @@ export function renderScenarioTrace(scenario, options = {}) {
   });
   return `${lines.join("\n")}\n`;
 }
-
