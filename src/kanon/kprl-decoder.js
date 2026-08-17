@@ -639,14 +639,20 @@ export class KprlDisassemblyDecoder extends KanonDecoder {
         if (mnemonic === "title" && rawArguments[0]?.type === "resourceRef") {
           const resource = parsedResources.resources.get(rawArguments[0].value);
           if (!resource) {
-            throw new KanonModelError(`Kprl title resource ${rawArguments[0].value} is missing`);
+            if (context.allowMissingResources === true) {
+              payload.resourceId = rawArguments[0].value;
+              payload.resourceMissing = true;
+            } else {
+              throw new KanonModelError(`Kprl title resource ${rawArguments[0].value} is missing`);
+            }
+          } else {
+            payload.resourceId = rawArguments[0].value;
+            payload.resourceSource = {
+              file: resource.sourceFile,
+              offset: resource.byteOffset,
+              line: resource.lineNumber
+            };
           }
-          payload.resourceId = rawArguments[0].value;
-          payload.resourceSource = {
-            file: resource.sourceFile,
-            offset: resource.byteOffset,
-            line: resource.lineNumber
-          };
         }
         records.push(unknownRecord(source, sourceFile, mnemonic, rawArguments, payload));
         continue;

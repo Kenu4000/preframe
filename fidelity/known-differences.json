@@ -99,6 +99,17 @@
       "portBehavior": "診断プレビューではliteral代入、itoa、文字列追記からBG003aまたはBG006とSDT0107、object 84、座標8,8を復元し、背景と立ち絵をKAGへ直接表示する。grpMultiのeffect 0、48、60、copy引数、OBJWAIPERASEの意味は未確定で無視する",
       "evidence": "ユーザー提供の短縮SEEN0070と会話途中断片の抽象命令列。途中断片は独立シナリオではなく、本線へ自動結合していない",
       "verification": "同じ区間の原作録画と診断版を比較し、立ち絵ID、表示座標、レイヤ、消去、差分切替、grpMulti効果時間を個別に確定する"
+    },
+    {
+      "id": "KF-0010",
+      "title": "本文リソースのないシステムシーンの意味は未確定",
+      "status": "open",
+      "severity": "high",
+      "scope": "importer-runtime",
+      "originalBehavior": "SEEN8501、SEEN8502、SEEN8511、SEEN8512、SEEN8514、SEEN9030、SEEN9070、SEEN9900が固有の制御処理を実行する",
+      "portBehavior": "診断プレビューは同名.utfのない.orgを制御用シーンとして読み込み、命令と画像候補を保持する。未確認命令は実行せず記録する",
+      "evidence": "ユーザー環境の--auto実行で8シーンに.orgだけが存在することを確認。.utfがない事実だけでは動画呼出しまたは画像構成のどちらかを確定できない",
+      "verification": "各.orgの抽象命令形式、参照画像ID、呼出元、原作実機の画面挙動を対応付け、命令単位の回帰テストを追加する"
     }
   ]
 }
