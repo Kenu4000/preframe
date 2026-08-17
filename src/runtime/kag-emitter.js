@@ -4,6 +4,7 @@ import { commandTraceSummary } from "../kanon/trace.js";
 const visualKinds = new Set(["background.show", "sprite.show", "sprite.hide"]);
 const supportedTransitionMethods = new Set(["crossfade", "universal", "scroll"]);
 const supportedPositions = new Set(["left", "left_center", "center", "right_center", "right"]);
+const whiteRuntimeStorage = "assets/system/white.png";
 
 export class UnsupportedKanonCommandError extends Error {
   constructor(command, message = `KAG emitter cannot reproduce command kind: ${command.kind}`) {
@@ -84,6 +85,12 @@ export class KagEmitter {
 
     for (let index = 0; index < scenario.commands.length; index += 1) {
       const command = scenario.commands[index];
+
+      if (command.kind === "kanon.background.open") {
+        this.#emitRuntimeTrace(lines, command, index);
+        lines.push(...this.#emitKanonBackgroundOpen(command));
+        continue;
+      }
 
       if (visualKinds.has(command.kind)) {
         let end = index;
@@ -188,6 +195,31 @@ export class KagEmitter {
     return [`@trans ${attributes.join(" ")}`, ...(command.payload.wait === false ? [] : ["@wt"] )];
   }
 
+  #emitKanonBackgroundOpen(command) {
+    const payload = command.payload;
+    if (
+      !payload.verifiedBehavior ||
+      payload.effectCode !== 0 ||
+      payload.transitionMethod !== "crossfade" ||
+      payload.sourceColor !== "white" ||
+      payload.durationMs !== 500
+    ) {
+      throw new UnsupportedKanonCommandError(
+        command,
+        `unverified grpOpenBg behavior: asset=${payload.asset.originalId} effect=${payload.effectCode}`
+      );
+    }
+
+    const storage = this.assets.resolve(payload.asset);
+    return [
+      `@image storage=\"${whiteRuntimeStorage}\" layer=base page=fore`,
+      "@backlay",
+      `@image storage=\"${storage}\" layer=base page=back`,
+      `@trans method=crossfade time=${payload.durationMs} layer=base children=true`,
+      "@wt"
+    ];
+  }
+
   #emitCommand(command) {
     const payload = command.payload;
     switch (command.kind) {
@@ -201,8 +233,11 @@ export class KagEmitter {
           );
         }
         const speaker = payload.speaker ? `【${escapeKagText(payload.speaker)}】[r]` : "";
-        const waitTag = payload.pageBreak === false ? "[l]" : "[p]";
-        return [`[current layer=message0 page=fore]${speaker}${escapeKagText(payload.text)}${waitTag}`];
+        const waitTag = payload.advanceMode === "kanon.pause" ? "" : payload.pageBreak === false ? "[l]" : "[p]";
+        return [
+          ...(payload.usesTextWindow ? ["@layopt layer=message0 page=fore visible=true"] : []),
+          `[current layer=message0 page=fore]${speaker}${escapeKagText(payload.text)}${waitTag}`
+        ];
       }
       case "bgm.play":
         return [`@playbgm storage=\"${this.assets.resolve(payload.asset)}\" loop=${payload.loop !== false}`];
@@ -222,6 +257,13 @@ export class KagEmitter {
         return [`@wait time=${Math.round(payload.durationMs)} canskip=${Boolean(payload.skippable)}`];
       case "transition":
         return this.#emitTransition(command);
+      case "kanon.message.hide":
+        return ["@layopt layer=message0 page=fore visible=false"];
+      case "kanon.message.pause":
+        if (payload.mode !== "txtwindow" || payload.clearTextAfterClick !== true) {
+          throw new UnsupportedKanonCommandError(command, "unverified Kanon pause behavior");
+        }
+        return ["[p][cm]"];
       case "variable.set":
         return [`@eval exp=\"f.kanon_var_${safeVariableName(payload.name)}=${tjsLiteral(payload.value)}\"`];
       case "flag.set":
