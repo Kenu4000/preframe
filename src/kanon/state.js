@@ -36,6 +36,7 @@ export class KanonStateMachine {
           text: command.payload.text,
           pageBreak: Boolean(command.payload.pageBreak)
         };
+        state.ui.messageVisible = true;
         state.ui.awaitingChoice = false;
         state.ui.choices = [];
         break;
@@ -91,6 +92,27 @@ export class KanonStateMachine {
         };
         state.timing.elapsedRequestedMs += command.payload.durationMs;
         break;
+      case "kanon.background.open":
+        state.visual.background = structuredClone(command.payload.asset);
+        state.transition.last = {
+          method: command.payload.transitionMethod ?? null,
+          durationMs: command.payload.durationMs ?? null,
+          wait: true,
+          kanonEffectCode: command.payload.effectCode,
+          verifiedBehavior: Boolean(command.payload.verifiedBehavior)
+        };
+        if (command.payload.verifiedBehavior) {
+          state.timing.elapsedRequestedMs += command.payload.durationMs;
+        }
+        break;
+      case "kanon.message.hide":
+        state.ui.messageVisible = false;
+        break;
+      case "kanon.message.pause":
+        state.ui.lastMessage = null;
+        state.ui.awaitingChoice = false;
+        state.ui.choices = [];
+        break;
       case "variable.set":
         state.variables[command.payload.name] = structuredClone(command.payload.value);
         break;
@@ -125,4 +147,3 @@ export function reduceScenarioLinearly(scenario) {
   scenario.commands.forEach((command, index) => machine.apply(command, index));
   return machine.snapshot();
 }
-
