@@ -85,15 +85,6 @@ const assetResolution = await resolveLocalAssetReferences(originalRoot, referenc
 const availableAssetLogicalIds = new Set(assetResolution.resolved.map((asset) => asset.reference.logicalId));
 const preview = createDiagnosticPreviewScenario(parsedScenario, { availableAssetLogicalIds });
 
-for (const unresolved of assetResolution.unresolved) {
-  preview.skipped.push({
-    reason: `asset-${unresolved.reason}`,
-    logicalId: unresolved.reference.logicalId,
-    originalId: unresolved.reference.originalId,
-    candidateCount: unresolved.candidateCount ?? 0
-  });
-}
-
 const outputPath = requireInside(cacheRoot, `cache/kanon/preview/${parsedScenario.id}`, "preview output");
 const dataRoot = path.join(outputPath.resolved, "data");
 const scenarioStorage = `scenario/${parsedScenario.id}.ks`;
@@ -123,7 +114,13 @@ const report = {
   assets: {
     referenced: references.length,
     copied: assetResolution.resolved.length,
-    unresolved: assetResolution.unresolved.length
+    unresolved: assetResolution.unresolved.length,
+    unresolvedDetails: assetResolution.unresolved.map((item) => ({
+      logicalId: item.reference.logicalId,
+      originalId: item.reference.originalId,
+      reason: item.reason,
+      candidateCount: item.candidateCount ?? 0
+    }))
   }
 };
 
