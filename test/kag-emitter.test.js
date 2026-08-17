@@ -76,7 +76,18 @@ test("KAG emitter reproduces the verified opening background and txtwindow contr
           loop: true
         }
       },
-      { offset: 20, opcode: "msgHide", rawArguments: [], decodedKind: "kanon.message.hide", payload: {} },
+      {
+        offset: 20,
+        opcode: "msgHide",
+        rawArguments: [],
+        decodedKind: "kanon.message.hide",
+        payload: {
+          durationMs: 200,
+          transitionMethod: "crossfade",
+          target: "message0",
+          verifiedBehavior: true
+        }
+      },
       {
         offset: 30,
         opcode: "grpOpenBg",
@@ -87,8 +98,7 @@ test("KAG emitter reproduces the verified opening background and txtwindow contr
           effectCode: 0,
           verifiedBehavior: true,
           transitionMethod: "crossfade",
-          durationMs: 500,
-          sourceColor: "white"
+          durationMs: 500
         }
       },
       {
@@ -120,12 +130,42 @@ test("KAG emitter reproduces the verified opening background and txtwindow contr
   const output = new KagEmitter(assets).emitScenario(new KanonParser().parse(decoded));
 
   const bgm = output.indexOf('@playbgm storage="assets/bgm/BGM16.ogg" loop=true');
-  const hide = output.indexOf("@layopt layer=message0 page=fore visible=false", bgm);
-  const white = output.indexOf('@image storage="assets/system/white.png" layer=base page=fore', hide);
-  const backlay = output.indexOf("@backlay", white);
+  const hideBacklay = output.indexOf("@backlay layer=message0", bgm);
+  const hideTransition = output.indexOf("@trans method=crossfade time=200 layer=message0", hideBacklay);
+  const hide = output.indexOf("@layopt layer=message0 page=fore visible=false opacity=255", hideTransition);
+  const backlay = output.indexOf("@backlay layer=base", hide);
   const background = output.indexOf('@image storage="assets/background/BG053.png" layer=base page=back', backlay);
-  const transition = output.indexOf("@trans method=crossfade time=500", background);
+  const transition = output.indexOf("@trans method=crossfade time=500 layer=base children=false", background);
   const pause = output.indexOf("[p][cm]", transition);
-  assert.ok(bgm >= 0 && hide > bgm && white > hide && backlay > white && background > backlay);
+  assert.ok(bgm >= 0 && hideBacklay > bgm && hideTransition > hideBacklay && hide > hideTransition);
+  assert.ok(backlay > hide && background > backlay);
   assert.ok(transition > background && pause > transition);
+});
+
+test("KAG emitter refuses bgmFadeOut until the Kprl duration unit is verified", () => {
+  const decoded = new JsonDecodedRecordDecoder().decode({
+    schemaVersion: 1,
+    sourceFile: "SYNTHETIC.org",
+    scenario: { id: "bgm-fade", entryLabel: "start" },
+    records: [
+      { offset: 0, opcode: "#entrypoint", rawArguments: [], decodedKind: "label", payload: { name: "start" } },
+      {
+        offset: 1,
+        opcode: "bgmFadeOut",
+        rawArguments: [{ type: "integer", value: 1200 }],
+        decodedKind: "kanon.bgm.fadeOut",
+        payload: {
+          rawDuration: 1200,
+          durationUnit: "unverified",
+          durationUnitVerified: false,
+          stopsAfterFade: true
+        }
+      }
+    ]
+  });
+  const emitter = new KagEmitter(new KanonAssetCatalog({ schemaVersion: 1, assets: [] }));
+  assert.throws(
+    () => emitter.emitScenario(new KanonParser().parse(decoded)),
+    /bgmFadeOut duration unit is not verified/
+  );
 });
