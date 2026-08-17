@@ -194,6 +194,12 @@ export class KagEmitter {
       case "label":
         return [`*${safeLabel(payload.name)}`];
       case "text": {
+        if (payload.requiresTextLayoutVerification || payload.speakerExpression) {
+          throw new UnsupportedKanonCommandError(
+            command,
+            "Kprl text layout or speaker expression must be verified before KAG emission"
+          );
+        }
         const speaker = payload.speaker ? `【${escapeKagText(payload.speaker)}】[r]` : "";
         const waitTag = payload.pageBreak === false ? "[l]" : "[p]";
         return [`[current layer=message0 page=fore]${speaker}${escapeKagText(payload.text)}${waitTag}`];
@@ -254,4 +260,3 @@ export class KagEmitter {
     }
   }
 }
-
