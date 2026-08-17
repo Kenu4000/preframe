@@ -54,7 +54,7 @@ test("Kprl decoder joins numbered resources without discarding source provenance
       "text",
       "kanon.message.pause",
       "kanon.bgm.fadeOut",
-      "unknown",
+      "wait",
       "unknown"
     ]
   );
@@ -96,9 +96,14 @@ test("Kprl decoder joins numbered resources without discarding source provenance
 
   const fadeOut = scenario.commands[7];
   assert.equal(fadeOut.payload.rawDuration, 1200);
-  assert.equal(fadeOut.payload.durationUnit, "unverified");
-  assert.equal(fadeOut.payload.durationUnitVerified, false);
+  assert.equal(fadeOut.payload.durationUnit, "ms");
+  assert.equal(fadeOut.payload.durationUnitVerified, true);
   assert.equal(fadeOut.payload.stopsAfterFade, true);
+
+  const wait = scenario.commands[8];
+  assert.equal(wait.payload.durationMs, 250);
+  assert.equal(wait.payload.skippable, false);
+  assert.equal(wait.payload.durationUnitVerified, true);
 
   const expectedOffset = Buffer.byteLength(input.disassembly.slice(0, input.disassembly.indexOf("bgmLoop")), "utf8");
   assert.equal(bgm.source.offset, expectedOffset);
@@ -113,7 +118,7 @@ test("Kprl decoder retains unresolved speaker macros and unknown mnemonics", () 
     "#resource 'SCENE0002.utf'",
     "#entrypoint 000 // S00",
     "#res<0001>",
-    "grpOpenBg('UNVERIFIED', 26)",
+    "grpOpenBg('UNVERIFIED', 99)",
     "unseenCommand(3)"
   ].join("\n");
   const resources = "<0001> \\{\\m{A}}Synthetic macro line\n";
@@ -128,10 +133,38 @@ test("Kprl decoder retains unresolved speaker macros and unknown mnemonics", () 
   assert.equal(scenario.commands[1].payload.speakerExpression, "\\m{A}");
   assert.equal(scenario.commands[2].kind, "unknown");
   assert.equal(scenario.commands[2].payload.proposedKind, "kanon.kprl.grpOpenBg");
-  assert.equal(scenario.commands[2].payload.decodedPayload.effectCode, 26);
+  assert.equal(scenario.commands[2].payload.decodedPayload.effectCode, 99);
   assert.equal(scenario.commands[3].kind, "unknown");
   assert.equal(scenario.commands[3].payload.proposedKind, "kanon.kprl.unseenCommand");
   assert.deepEqual(scenario.commands[3].source.rawArguments, [{ type: "integer", value: 3, raw: "3" }]);
+});
+
+test("Kprl decoder preserves the verified SIRO effect and opening call", () => {
+  const disassembly = [
+    "#file 'SCENE0050.TXT'",
+    "#resource 'SCENE0050.utf'",
+    "#entrypoint 000 // S00",
+    "grpOpenBg('SIRO', 26)",
+    "wait(2000)",
+    "farcall(8502)"
+  ].join("\n");
+  const scenario = new KanonParser().parse(
+    new KprlDisassemblyDecoder().decode(
+      { disassembly, resources: "// no text resources\n" },
+      { sourceFile: "SCENE0050.org", resourceFile: "SCENE0050.utf" }
+    )
+  );
+  const background = scenario.commands[1];
+  assert.equal(background.kind, "kanon.background.open");
+  assert.equal(background.payload.asset.originalId, "SIRO");
+  assert.equal(background.payload.effectCode, 26);
+  assert.equal(background.payload.transitionMethod, "crossfade");
+  assert.equal(background.payload.durationMs, 2000);
+  assert.equal(background.payload.targetAppearance, "white");
+  assert.equal(scenario.commands[2].kind, "wait");
+  assert.equal(scenario.commands[2].payload.durationMs, 2000);
+  assert.equal(scenario.commands[3].kind, "kanon.opening.start");
+  assert.equal(scenario.commands[3].payload.callTarget, 8502);
 });
 
 test("Kprl decoder fails when a referenced resource is absent", () => {

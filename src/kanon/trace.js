@@ -48,6 +48,8 @@ export function commandTraceSummary(command, { includeText = false } = {}) {
       return `KANON_MSG_HIDE ${payload.durationMs}ms method=${payload.transitionMethod}`;
     case "kanon.message.pause":
       return "KANON_PAUSE clear=true";
+    case "kanon.opening.start":
+      return `KANON_OPENING_START target=${payload.callTarget}`;
     case "jump":
       return `JUMP ${payload.target}`;
     case "choice":

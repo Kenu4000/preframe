@@ -112,3 +112,53 @@ test("verified Kanon opening commands update visible state explicitly", () => {
   assert.equal(state.audio.bgm.stopTrigger, "bgmFadeOut");
   assert.equal(state.audio.bgm.fadeOut.rawDuration, 1200);
 });
+
+test("verified white fade, hold, and opening call remain explicit in state and trace", () => {
+  const decoded = new JsonDecodedRecordDecoder().decode({
+    schemaVersion: 1,
+    sourceFile: "SYNTHETIC.org",
+    scenario: { id: "opening-transition", entryLabel: "start" },
+    records: [
+      { offset: 0, opcode: "#entrypoint", rawArguments: [], decodedKind: "label", payload: { name: "start" } },
+      {
+        offset: 1,
+        opcode: "grpOpenBg",
+        rawArguments: [],
+        decodedKind: "kanon.background.open",
+        payload: {
+          asset: { kind: "background", logicalId: "kanon.background.SIRO", originalId: "SIRO" },
+          effectCode: 26,
+          verifiedBehavior: true,
+          transitionMethod: "crossfade",
+          durationMs: 2000,
+          targetAppearance: "white"
+        }
+      },
+      {
+        offset: 2,
+        opcode: "wait",
+        rawArguments: [],
+        decodedKind: "wait",
+        payload: { durationMs: 2000, skippable: false, durationUnitVerified: true }
+      },
+      {
+        offset: 3,
+        opcode: "farcall",
+        rawArguments: [],
+        decodedKind: "kanon.opening.start",
+        payload: { callTarget: 8502, verifiedBehavior: true }
+      }
+    ]
+  });
+  const scenario = new KanonParser().parse(decoded);
+  const state = reduceScenarioLinearly(scenario);
+  const trace = renderScenarioTrace(scenario);
+  assert.equal(state.visual.background.originalId, "SIRO");
+  assert.equal(state.transition.last.kanonEffectCode, 26);
+  assert.equal(state.timing.elapsedRequestedMs, 4000);
+  assert.equal(state.flow.phase, "opening");
+  assert.equal(state.flow.openingCallTarget, 8502);
+  assert.match(trace, /KANON_GRP_OPEN_BG kanon\.background\.SIRO effect=26 verified=true/);
+  assert.match(trace, /WAIT 2000ms skippable=false/);
+  assert.match(trace, /KANON_OPENING_START target=8502/);
+});

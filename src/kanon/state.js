@@ -9,7 +9,8 @@ export function createInitialKanonState(scenarioId) {
     audio: { bgm: null, se: {}, voice: {} },
     transition: { last: null },
     timing: { lastWaitMs: 0, elapsedRequestedMs: 0 },
-    ui: { messageVisible: true, lastMessage: null, awaitingChoice: false, choices: [] }
+    ui: { messageVisible: true, lastMessage: null, awaitingChoice: false, choices: [] },
+    flow: { phase: "scenario", openingCallTarget: null }
   };
 }
 
@@ -137,6 +138,10 @@ export class KanonStateMachine {
         state.ui.lastMessage = null;
         state.ui.awaitingChoice = false;
         state.ui.choices = [];
+        break;
+      case "kanon.opening.start":
+        state.flow.phase = "opening";
+        state.flow.openingCallTarget = command.payload.callTarget;
         break;
       case "variable.set":
         state.variables[command.payload.name] = structuredClone(command.payload.value);

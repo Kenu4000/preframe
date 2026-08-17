@@ -4,6 +4,22 @@ import { commandTraceSummary } from "../kanon/trace.js";
 const visualKinds = new Set(["background.show", "sprite.show", "sprite.hide"]);
 const supportedTransitionMethods = new Set(["crossfade", "universal", "scroll"]);
 const supportedPositions = new Set(["left", "left_center", "center", "right_center", "right"]);
+const kanonTextWindow = Object.freeze({
+  left: 6,
+  top: 352,
+  width: 628,
+  height: 64,
+  color: "0x00084c",
+  opacity: 190,
+  marginLeft: 12,
+  marginTop: 8,
+  marginRight: 12,
+  marginBottom: 8,
+  fontFace: "ＭＳ ゴシック,MS Gothic",
+  fontSize: 16,
+  fontColor: "0xffffff",
+  shadowColor: "0x000000"
+});
 
 export class UnsupportedKanonCommandError extends Error {
   constructor(command, message = `KAG emitter cannot reproduce command kind: ${command.kind}`) {
@@ -198,9 +214,9 @@ export class KagEmitter {
     const payload = command.payload;
     if (
       !payload.verifiedBehavior ||
-      payload.effectCode !== 0 ||
       payload.transitionMethod !== "crossfade" ||
-      payload.durationMs !== 500
+      !Number.isFinite(payload.durationMs) ||
+      payload.durationMs < 0
     ) {
       throw new UnsupportedKanonCommandError(
         command,
@@ -214,6 +230,15 @@ export class KagEmitter {
       `@image storage=\"${storage}\" layer=base page=back`,
       `@trans method=crossfade time=${payload.durationMs} layer=base children=false`,
       "@wt"
+    ];
+  }
+
+  #emitKanonTextWindowSetup() {
+    const profile = kanonTextWindow;
+    return [
+      "@current layer=message0 page=fore",
+      `@position layer=message0 page=fore left=${profile.left} top=${profile.top} width=${profile.width} height=${profile.height} frame="" color=${profile.color} opacity=${profile.opacity} marginl=${profile.marginLeft} margint=${profile.marginTop} marginr=${profile.marginRight} marginb=${profile.marginBottom} vertical=false draggable=false visible=true`,
+      `@font face="${profile.fontFace}" size=${profile.fontSize} color=${profile.fontColor} shadow=true shadowcolor=${profile.shadowColor} bold=false`
     ];
   }
 
@@ -232,7 +257,7 @@ export class KagEmitter {
         const speaker = payload.speaker ? `【${escapeKagText(payload.speaker)}】[r]` : "";
         const waitTag = payload.advanceMode === "kanon.pause" ? "" : payload.pageBreak === false ? "[l]" : "[p]";
         return [
-          ...(payload.usesTextWindow ? ["@layopt layer=message0 page=fore visible=true"] : []),
+          ...(payload.usesTextWindow ? this.#emitKanonTextWindowSetup() : []),
           `[current layer=message0 page=fore]${speaker}${escapeKagText(payload.text)}${waitTag}`
         ];
       }
@@ -281,6 +306,11 @@ export class KagEmitter {
           throw new UnsupportedKanonCommandError(command, "unverified Kanon pause behavior");
         }
         return ["[p][cm]"];
+      case "kanon.opening.start":
+        throw new UnsupportedKanonCommandError(
+          command,
+          `opening playback for farcall(${payload.callTarget}) is not implemented`
+        );
       case "variable.set":
         return [`@eval exp=\"f.kanon_var_${safeVariableName(payload.name)}=${tjsLiteral(payload.value)}\"`];
       case "flag.set":

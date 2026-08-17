@@ -59,7 +59,12 @@
       "opcode": "DUMMY_TEXT",
       "rawArguments": [{ "type": "string-ref", "value": 1 }],
       "decodedKind": "text",
-      "payload": { "speaker": "テスト", "text": "これは原作データを含まない合成シーンです。", "pageBreak": true }
+      "payload": {
+        "speaker": "テスト",
+        "text": "これは原作データを含まない合成シーンです。",
+        "pageBreak": true,
+        "usesTextWindow": true
+      }
     },
     {
       "offset": 112,
@@ -91,4 +96,3 @@
     }
   ]
 }
-
