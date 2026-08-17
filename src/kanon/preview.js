@@ -12,8 +12,12 @@ const assetCommandKinds = new Set([
 export function collectScenarioAssetReferences(scenario) {
   const references = new Map();
   for (const command of scenario.commands) {
-    if (!assetCommandKinds.has(command.kind) || !command.payload.asset) continue;
-    references.set(command.payload.asset.logicalId, command.payload.asset);
+    if (assetCommandKinds.has(command.kind) && command.payload.asset) {
+      references.set(command.payload.asset.logicalId, command.payload.asset);
+      continue;
+    }
+    const candidateAsset = command.kind === "unknown" ? command.payload.decodedPayload?.candidateAsset : null;
+    if (candidateAsset) references.set(candidateAsset.logicalId, candidateAsset);
   }
   return [...references.values()];
 }
@@ -33,6 +37,38 @@ export function createDiagnosticPreviewScenario(scenario, { availableAssetLogica
     };
 
     if (command.kind === "unknown") {
+      const candidateAsset = command.payload.decodedPayload?.candidateAsset;
+      if (command.payload.proposedKind === "kanon.kprl.grpOpenBg" && candidateAsset) {
+        if (availableAssetLogicalIds && !availableAssetLogicalIds.has(candidateAsset.logicalId)) {
+          skipped.push({
+            ...diagnostic,
+            reason: "local-asset-not-resolved",
+            proposedKind: command.payload.proposedKind,
+            logicalId: candidateAsset.logicalId,
+            originalId: candidateAsset.originalId
+          });
+          continue;
+        }
+        commands.push(
+          createKanonCommand({
+            kind: "background.show",
+            source: command.source,
+            payload: {
+              asset: candidateAsset,
+              diagnosticPreview: true,
+              ignoredEffectCode: command.payload.decodedPayload?.effectCode ?? null
+            }
+          })
+        );
+        approximations.push({
+          ...diagnostic,
+          reason: "unverified-background-effect-ignored",
+          proposedKind: command.payload.proposedKind,
+          originalId: candidateAsset.originalId,
+          effectCode: command.payload.decodedPayload?.effectCode ?? null
+        });
+        continue;
+      }
       skipped.push({
         ...diagnostic,
         reason: "unresolved-command",

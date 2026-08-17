@@ -71,7 +71,7 @@ npm run validate:assets
 npm.cmd run test:kanon
 ```
 
-これは現在の再現範囲を見るための診断プレビューです。未確定命令、未実装のOP開始、解決できないアセット参照は、元位置・opcode・理由を `cache/kanon/preview/<scene>/preview-report.json` に残して飛ばします。本文は暫定txtwindowで表示し、未解決の話者式は省略します。通常のKAG生成は引き続き未確定命令で停止するため、このプレビューを忠実再現済みとは扱いません。
+これは現在の再現範囲を見るための診断プレビューです。`grpOpenBg`の引数が実在画像へ解決できる場合は、未確定の画面効果だけを無視して画像自体を直接表示します。画像にも解決できない命令、未実装のOP開始、その他の未確定命令は、元位置・opcode・理由を `cache/kanon/preview/<scene>/preview-report.json` に残して飛ばします。本文は暫定txtwindowで表示し、未解決の話者式は省略します。通常のKAG生成は引き続き未確定命令で停止するため、このプレビューを忠実再現済みとは扱いません。
 
 ## 次の実装入力
 
