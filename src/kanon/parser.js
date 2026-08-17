@@ -113,6 +113,11 @@ export class KanonParser {
         requireNonNegative("durationMs");
         requireString("transitionMethod");
         break;
+      case "kanon.opening.start":
+        if (!Number.isSafeInteger(payload.callTarget) || payload.callTarget < 0) {
+          throw new KanonModelError("kanon.opening.start.callTarget must be a non-negative integer");
+        }
+        break;
       case "variable.set":
       case "flag.set":
         requireString("name");

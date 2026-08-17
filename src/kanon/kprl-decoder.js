@@ -197,6 +197,15 @@ function verifiedGrpOpenBgBehavior(originalId, effectCode) {
       evidence: "measured-from-30fps-recording"
     };
   }
+  if (originalId === "SIRO" && effectCode === 26) {
+    return {
+      verifiedBehavior: true,
+      transitionMethod: "crossfade",
+      durationMs: 2000,
+      targetAppearance: "white",
+      evidence: "measured-from-30fps-recording-2026-08-18"
+    };
+  }
   return null;
 }
 
@@ -384,9 +393,61 @@ export class KprlDisassemblyDecoder extends KanonDecoder {
             decodedKind: "kanon.bgm.fadeOut",
             payload: {
               rawDuration: rawArguments[0].value,
-              durationUnit: "unverified",
-              durationUnitVerified: false,
+              durationUnit: "ms",
+              durationUnitVerified: true,
               stopsAfterFade: true,
+              evidence: "measured-from-recording-audio-envelope-2026-08-18",
+              sourceLine: source.lineNumber
+            },
+            synthetic: false,
+            provenance: "kprl-disassembly",
+            line: source.lineNumber
+          });
+          continue;
+        }
+
+        if (
+          mnemonic === "wait" &&
+          rawArguments.length === 1 &&
+          rawArguments[0].type === "integer" &&
+          rawArguments[0].value >= 0
+        ) {
+          records.push({
+            sourceFile,
+            offset: source.byteOffset,
+            opcode: mnemonic,
+            rawArguments,
+            decodedKind: "wait",
+            payload: {
+              durationMs: rawArguments[0].value,
+              skippable: false,
+              durationUnitVerified: true,
+              evidence: "white-screen-hold-before-opening-2026-08-18",
+              sourceLine: source.lineNumber
+            },
+            synthetic: false,
+            provenance: "kprl-disassembly",
+            line: source.lineNumber
+          });
+          continue;
+        }
+
+        if (
+          mnemonic === "farcall" &&
+          rawArguments.length === 1 &&
+          rawArguments[0].type === "integer" &&
+          rawArguments[0].value === 8502
+        ) {
+          records.push({
+            sourceFile,
+            offset: source.byteOffset,
+            opcode: mnemonic,
+            rawArguments,
+            decodedKind: "kanon.opening.start",
+            payload: {
+              callTarget: rawArguments[0].value,
+              verifiedBehavior: true,
+              evidence: "opening-start-observed-after-white-hold-2026-08-18",
               sourceLine: source.lineNumber
             },
             synthetic: false,

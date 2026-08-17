@@ -57,6 +57,12 @@ state/dummy.final-state.json
 
 原作データは `private/` のみで扱い、Gitには入りません。ファイル名や配置を変更する前提も置かず、ローカル設定から参照します。詳細は [docs/original-data-layout.md](docs/original-data-layout.md) を参照してください。
 
+`private/kanon_original/` へ配置したシナリオ、BMP、NWA、WAVは、内容を外部へ送らず次のコマンドで検査できます。
+
+```console
+npm run validate:assets
+```
+
 ## 次の実装入力
 
 実Importerの着手に必要なのは原作ファイルそのものではなく、[docs/decoder-contract.md](docs/decoder-contract.md) に定義した抽象化済み情報です。

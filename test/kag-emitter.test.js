@@ -20,6 +20,18 @@ test("KAG emitter stages visual changes on the back page before transition", asy
   assert.doesNotMatch(output, /asset-id.*100/);
 });
 
+test("KAG emitter configures the provisional Kanon txtwindow instead of the KAG default window", async () => {
+  const { scenario, assets } = await loadDummy();
+  const output = new KagEmitter(assets).emitScenario(scenario);
+  assert.match(
+    output,
+    /@position layer=message0 page=fore left=6 top=352 width=628 height=64 frame="" color=0x00084c opacity=190/
+  );
+  assert.match(output, /marginl=12 margint=8 marginr=12 marginb=8/);
+  assert.match(output, /@font face="ＭＳ ゴシック,MS Gothic" size=16 color=0xffffff/);
+  assert.doesNotMatch(output, /@layopt layer=message0 page=fore visible=true\r?\n\[current/);
+});
+
 test("KAG emitter fails closed when an unknown command exists", () => {
   const decoded = new JsonDecodedRecordDecoder().decode({
     schemaVersion: 1,
@@ -168,4 +180,50 @@ test("KAG emitter refuses bgmFadeOut until the Kprl duration unit is verified", 
     () => emitter.emitScenario(new KanonParser().parse(decoded)),
     /bgmFadeOut duration unit is not verified/
   );
+});
+
+test("KAG emitter reproduces the verified two-second white fade and hold", () => {
+  const decoded = new JsonDecodedRecordDecoder().decode({
+    schemaVersion: 1,
+    sourceFile: "SYNTHETIC.org",
+    scenario: { id: "opening-transition", entryLabel: "start" },
+    records: [
+      { offset: 0, opcode: "#entrypoint", rawArguments: [], decodedKind: "label", payload: { name: "start" } },
+      {
+        offset: 1,
+        opcode: "grpOpenBg",
+        rawArguments: [],
+        decodedKind: "kanon.background.open",
+        payload: {
+          asset: { kind: "background", logicalId: "kanon.background.SIRO", originalId: "SIRO" },
+          effectCode: 26,
+          verifiedBehavior: true,
+          transitionMethod: "crossfade",
+          durationMs: 2000,
+          targetAppearance: "white"
+        }
+      },
+      {
+        offset: 2,
+        opcode: "wait",
+        rawArguments: [],
+        decodedKind: "wait",
+        payload: { durationMs: 2000, skippable: false, durationUnitVerified: true }
+      }
+    ]
+  });
+  const assets = new KanonAssetCatalog({
+    schemaVersion: 1,
+    assets: [
+      {
+        kind: "background",
+        logicalId: "kanon.background.SIRO",
+        originalId: "SIRO",
+        runtimeStorage: "assets/background/SIRO.bmp"
+      }
+    ]
+  });
+  const output = new KagEmitter(assets).emitScenario(new KanonParser().parse(decoded));
+  assert.match(output, /@trans method=crossfade time=2000 layer=base children=false/);
+  assert.match(output, /@wait time=2000 canskip=false/);
 });

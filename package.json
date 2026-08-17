@@ -9,6 +9,7 @@
   "scripts": {
     "build:dummy": "node src/cli/build-dummy.js",
     "import:kprl": "node src/cli/import-kprl.js",
+    "validate:assets": "node src/cli/validate-local-assets.js",
     "check": "node src/cli/check.js",
     "test": "node --test",
     "verify": "npm run check && npm test && npm run build:dummy"

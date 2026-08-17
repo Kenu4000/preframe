@@ -41,8 +41,8 @@
       "severity": "blocking",
       "scope": "importer-runtime",
       "originalBehavior": "各Kprl命令が原作どおりの画面、音、入力、制御フローを実行する",
-      "portBehavior": "bgmLoop、msgHide、pause、grpOpenBg('FGNY02A',0)、bgmFadeOutの終了契機は確認済みのKanon固有命令へ昇格した。title、他のgrpOpenBg、wait、farcall、jump、eof、haltはunknown。bgmFadeOutは時間単位未確認のためKAG出力を停止する",
-      "evidence": "原作実機と30fps録画で、BGMがbgmFadeOutまで継続、msgHideが約0.20秒、FGNY02Aの効果番号0が約0.50秒、pause後にtxtwindow本文が消えることを確認",
+      "portBehavior": "bgmLoop、msgHide、pause、grpOpenBg('FGNY02A',0)、grpOpenBg('SIRO',26)、bgmFadeOut(1200)、wait(2000)、farcall(8502)のOP開始は確認済みのKanon固有命令へ昇格した。title、BG053とFGNY02BのgrpOpenBg、jump、eof、haltはunknown。OP本体の再生処理は未実装のためKAG出力を停止する",
+      "evidence": "原作実機と30fps録画で、BGMが約1.2秒でfade-out、msgHideが約0.20秒、FGNY02Aの効果番号0が約0.50秒、SIROの効果番号26が約2.0秒の白fade、続く約2.0秒保持後にOPへ移ることを確認",
       "verification": "各命令について引数の意味と実機挙動を確認し、1命令ずつ回帰テストを追加してknownへ昇格する"
     },
     {
@@ -52,7 +52,7 @@
       "severity": "high",
       "scope": "ui-text",
       "originalBehavior": "原作txtwindowに名前と本文を所定の書体、位置、速度で表示し、クリック後に本文を消す",
-      "portBehavior": "クリック待ち、本文消去、message layer表示状態、約0.20秒のhide transitionはモデル化済み。外観、文字配置、speaker markup、m macroが未確定なため実本文のKAG出力を停止する",
+      "portBehavior": "クリック待ち、本文消去、message layer表示状態、約0.20秒のhide transitionに加え、録画から推定した濃紺半透明の暫定txtwindow位置・寸法・余白・白文字を実装した。フレーム装飾、正確な色・透明度・書体・文字配置、speaker markup、m macroが未確定なため実本文のKAG出力は引き続き停止する",
       "evidence": "pause後に文章が消えるtxtwindow方式とhide transition時間は実機録画で確認済みだが、表示規則の詳細は未取得",
       "verification": "合成文を用いたtxtwindowを原作と比較し、名前欄、本文領域、書体、行間、表示速度、クリック記号を個別に確認する"
     },
@@ -66,6 +66,28 @@
       "portBehavior": "白画面をgrpOpenBg('BG053',0)の効果として誤実装していたが撤回済み。開始処理はtitle flowとともに未実装",
       "evidence": "ユーザーの実機確認により、白画面はgrpOpenBgではなく「初めから」を押した時の別処理と判明",
       "verification": "タイトル画面から「初めから」を選択し、白画面開始・BGM開始・最初の背景表示の時系列をフレーム単位で比較する"
+    },
+    {
+      "id": "KF-0007",
+      "title": "Voice手動指示のImporterと再生対応が未実装",
+      "status": "open",
+      "severity": "high",
+      "scope": "voice-importer-runtime",
+      "originalBehavior": "未改造のPC版にはVoiceがない。ユーザー改造環境ではKANON_SE/WAV以下へキャラクター別に格納したVoiceをSEと同じ要領で再生する",
+      "portBehavior": "Voiceはprivate/kanon_original/voiceへ他のデータと同様に配置する。通常SEと分けて状態・トレースへ記録し、KAGのplayse/stopseへ出力する基礎モデルはあるが、手動指示をシナリオ位置へ重ねるImporterは未実装",
+      "evidence": "ユーザー説明とVoice直下にキャラクター別フォルダ0〜Bが存在するローカル構造の画面記録",
+      "verification": "Voiceの相対パスと挿入位置を記述する手動指示形式を実装し、合成Voiceを用いた回帰テストとユーザー改造環境との再生順・停止条件の比較を行う"
+    },
+    {
+      "id": "KF-0008",
+      "title": "NWA形式BGMからWAVへの再現可能な変換処理が未実装",
+      "status": "open",
+      "severity": "blocking",
+      "scope": "asset-importer-audio",
+      "originalBehavior": "BGMをNWAファイルから再生する",
+      "portBehavior": "private/kanon_original/bgm内の変換済みWAV配置とWAVヘッダは検査できるが、原作NWAからWAVを再生成する変換処理は未実装",
+      "evidence": "ユーザーのローカル解析環境でBGMファイルがNWA形式であることを確認",
+      "verification": "NWAの抽象化済み形式情報または検証済みローカル変換手段を用意し、合成または権利上問題のないNWA fixtureで変換テストを追加した後、生成WAVと原作とのループ位置・音量・再生時間を比較する"
     }
   ]
 }
