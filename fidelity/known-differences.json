@@ -41,7 +41,7 @@
       "severity": "blocking",
       "scope": "importer-runtime",
       "originalBehavior": "各Kprl命令が原作どおりの画面、音、入力、制御フローを実行する",
-      "portBehavior": "bgmLoop、msgHide、pause、効果番号0のgrpOpenBg、bgmFadeOutの終了契機は確認済みのKanon固有命令へ昇格した。title、効果番号26、wait、farcall、jump、eof、haltはunknown。bgmFadeOutは時間単位未確認のためKAG出力を停止する",
+      "portBehavior": "bgmLoop、msgHide、pause、grpOpenBg('FGNY02A',0)、bgmFadeOutの終了契機は確認済みのKanon固有命令へ昇格した。title、他のgrpOpenBg、wait、farcall、jump、eof、haltはunknown。bgmFadeOutは時間単位未確認のためKAG出力を停止する",
       "evidence": "原作実機と30fps録画で、BGMがbgmFadeOutまで継続、msgHideが約0.20秒、FGNY02Aの効果番号0が約0.50秒、pause後にtxtwindow本文が消えることを確認",
       "verification": "各命令について引数の意味と実機挙動を確認し、1命令ずつ回帰テストを追加してknownへ昇格する"
     },
