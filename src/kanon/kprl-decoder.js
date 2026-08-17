@@ -189,12 +189,12 @@ function logicalAssetReference(kind, originalId) {
 }
 
 function verifiedGrpOpenBgBehavior(originalId, effectCode) {
-  if (effectCode === 0) {
+  if (originalId === "FGNY02A" && effectCode === 0) {
     return {
       verifiedBehavior: true,
       transitionMethod: "crossfade",
       durationMs: 500,
-      evidence: originalId === "FGNY02A" ? "measured-from-30fps-recording" : "verified-effect-code-0"
+      evidence: "measured-from-30fps-recording"
     };
   }
   return null;
