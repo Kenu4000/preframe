@@ -17,7 +17,9 @@ export function commandTraceSummary(command, { includeText = false } = {}) {
     case "background.show":
       return `BACKGROUND ${payload.asset.logicalId}`;
     case "sprite.show":
-      return `SPRITE_SHOW ${payload.asset.logicalId} slot=${payload.slot} pos=${payload.position} layer=${payload.layer}`;
+      return `SPRITE_SHOW ${payload.asset.logicalId} slot=${payload.slot} ${
+        payload.position === undefined ? `x=${payload.x} y=${payload.y}` : `pos=${payload.position}`
+      } layer=${payload.layer}`;
     case "sprite.hide":
       return `SPRITE_HIDE slot=${payload.slot} layer=${payload.layer}`;
     case "bgm.play":

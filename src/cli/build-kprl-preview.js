@@ -33,23 +33,28 @@ function requireInside(root, candidate, label) {
   return { resolved, relative: relative.split(path.sep).join("/") };
 }
 
-async function findSingleScenarioPair() {
+async function findScenarioPairs() {
   const scenarioRoot = path.join(privateRoot, "kanon_original", "scenario");
   const entries = (await readdir(scenarioRoot, { withFileTypes: true })).filter((entry) => entry.isFile());
   const byStem = new Map();
   for (const entry of entries) {
     const extension = path.extname(entry.name).toLowerCase();
     if (extension !== ".org" && extension !== ".utf") continue;
-    const stem = entry.name.slice(0, -extension.length).toLowerCase();
-    const pair = byStem.get(stem) ?? {};
+    const stem = entry.name.slice(0, -extension.length);
+    const key = stem.toLowerCase();
+    const pair = byStem.get(key) ?? { stem };
     pair[extension.slice(1)] = path.join(scenarioRoot, entry.name);
-    byStem.set(stem, pair);
+    byStem.set(key, pair);
   }
-  const complete = [...byStem.values()].filter((pair) => pair.org && pair.utf);
-  if (complete.length !== 1) {
-    throw new Error(`--auto requires exactly one .org/.utf pair in private/kanon_original/scenario (found ${complete.length})`);
+  const incomplete = [...byStem.values()].filter((pair) => !pair.org || !pair.utf);
+  if (incomplete.length > 0) {
+    throw new Error(`--auto found incomplete .org/.utf pairs: ${incomplete.map((pair) => pair.stem).join(", ")}`);
   }
-  return complete[0];
+  const complete = [...byStem.values()].sort((left, right) => left.stem.localeCompare(right.stem, "en"));
+  if (complete.length === 0) {
+    throw new Error("--auto requires at least one .org/.utf pair in private/kanon_original/scenario");
+  }
+  return complete;
 }
 
 async function assertFile(file, label) {
@@ -57,40 +62,71 @@ async function assertFile(file, label) {
   if (!information?.isFile()) throw new Error(`${label} not found: ${path.relative(repositoryRoot, file)}`);
 }
 
-let orgOption = readOption("--org");
-let resourceOption = readOption("--resource");
+let inputPairs;
 if (hasFlag("--auto")) {
-  const pair = await findSingleScenarioPair();
-  orgOption = pair.org;
-  resourceOption = pair.utf;
-}
-if (!orgOption || !resourceOption) {
-  throw new Error(
-    "usage: node src/cli/build-kprl-preview.js --auto [--deploy] [--launch] or --org private/.../SCENE.org --resource private/.../SCENE.utf"
-  );
+  inputPairs = await findScenarioPairs();
+} else {
+  const orgOption = readOption("--org");
+  const resourceOption = readOption("--resource");
+  if (!orgOption || !resourceOption) {
+    throw new Error(
+      "usage: node src/cli/build-kprl-preview.js --auto [--start SEEN0050] [--deploy] [--launch] or --org private/.../SCENE.org --resource private/.../SCENE.utf"
+    );
+  }
+  inputPairs = [{ stem: path.basename(orgOption, path.extname(orgOption)), org: orgOption, utf: resourceOption }];
 }
 
-const orgPath = requireInside(privateRoot, orgOption, "--org");
-const resourcePath = requireInside(privateRoot, resourceOption, "--resource");
-const [disassembly, resources] = await Promise.all([readFile(orgPath.resolved), readFile(resourcePath.resolved)]);
-const decoded = new KprlDisassemblyDecoder().decode(
-  { disassembly, resources },
-  { sourceFile: orgPath.relative, resourceFile: resourcePath.relative }
+const decodedScenarios = await Promise.all(
+  inputPairs.map(async (pair) => {
+    const orgPath = requireInside(privateRoot, pair.org, "--org");
+    const resourcePath = requireInside(privateRoot, pair.utf, "--resource");
+    const [disassembly, resources] = await Promise.all([readFile(orgPath.resolved), readFile(resourcePath.resolved)]);
+    const decoded = new KprlDisassemblyDecoder().decode(
+      { disassembly, resources },
+      {
+        sourceFile: orgPath.relative,
+        resourceFile: resourcePath.relative,
+        allowMissingResources: true
+      }
+    );
+    return {
+      source: { org: orgPath.relative, resource: resourcePath.relative },
+      scenario: new KanonParser().parse(decoded)
+    };
+  })
 );
-const parsedScenario = new KanonParser().parse(decoded);
 
-const references = collectScenarioAssetReferences(parsedScenario);
+const scenarioIds = new Set(decodedScenarios.map((item) => item.scenario.id));
+if (scenarioIds.size !== decodedScenarios.length) throw new Error("duplicate scenario ids found in --auto input");
+const requestedStart = readOption("--start");
+const startScenarioId = requestedStart ?? decodedScenarios[0].scenario.id;
+if (!scenarioIds.has(startScenarioId)) throw new Error(`start scenario was not found: ${startScenarioId}`);
+
+const referencesById = new Map();
+for (const item of decodedScenarios) {
+  for (const reference of collectScenarioAssetReferences(item.scenario)) {
+    referencesById.set(reference.logicalId, reference);
+  }
+}
+const references = [...referencesById.values()];
 const originalRoot = path.join(privateRoot, "kanon_original");
 const assetResolution = await resolveLocalAssetReferences(originalRoot, references);
 const availableAssetLogicalIds = new Set(assetResolution.resolved.map((asset) => asset.reference.logicalId));
-const preview = createDiagnosticPreviewScenario(parsedScenario, { availableAssetLogicalIds });
 
-const outputPath = requireInside(cacheRoot, `cache/kanon/preview/${parsedScenario.id}`, "preview output");
+const previews = decodedScenarios.map((item) => ({
+  ...item,
+  preview: createDiagnosticPreviewScenario(item.scenario, {
+    availableAssetLogicalIds,
+    availableScenarioIds: scenarioIds
+  })
+}));
+
+const outputPath = requireInside(cacheRoot, "cache/kanon/preview", "preview output");
 const dataRoot = path.join(outputPath.resolved, "data");
-const scenarioStorage = `scenario/${parsedScenario.id}.ks`;
 await rm(outputPath.resolved, { recursive: true, force: true });
 await Promise.all([
   mkdir(path.join(dataRoot, "scenario"), { recursive: true }),
+  mkdir(path.join(outputPath.resolved, "reports"), { recursive: true }),
   mkdir(path.join(outputPath.resolved, "trace"), { recursive: true }),
   mkdir(path.join(outputPath.resolved, "state"), { recursive: true })
 ]);
@@ -102,15 +138,43 @@ const manifest = {
 };
 const catalog = new KanonAssetCatalog(manifest);
 const emitter = new KagEmitter(catalog, { includeRuntimeTrace: true });
-const scenarioScript = `${emitter.emitScenario(preview.scenario)}@s\r\n`;
+
+const sceneReports = [];
+for (const item of previews) {
+  const scenarioId = item.scenario.id;
+  const scenarioStorage = `scenario/${scenarioId}.ks`;
+  const scenarioScript = `${emitter.emitScenario(item.preview.scenario)}@s\r\n`;
+  const report = {
+    scenarioId,
+    source: item.source,
+    originalCommandCount: item.scenario.commands.length,
+    emittedCommandCount: item.preview.scenario.commands.length,
+    skipped: item.preview.skipped,
+    approximations: item.preview.approximations
+  };
+  sceneReports.push(report);
+  await Promise.all([
+    writeFile(path.join(dataRoot, ...scenarioStorage.split("/")), scenarioScript, "utf8"),
+    writeFile(path.join(outputPath.resolved, "reports", `${scenarioId}.json`), `${JSON.stringify(report, null, 2)}\n`, "utf8"),
+    writeFile(path.join(outputPath.resolved, "trace", `${scenarioId}.trace.log`), renderScenarioTrace(item.preview.scenario), "utf8"),
+    writeFile(
+      path.join(outputPath.resolved, "state", `${scenarioId}.final-state.json`),
+      `${JSON.stringify(reduceScenarioLinearly(item.preview.scenario), null, 2)}\n`,
+      "utf8"
+    )
+  ]);
+}
+
 const report = {
   mode: "diagnostic-preview",
   faithfulBuild: false,
-  source: { org: orgPath.relative, resource: resourcePath.relative },
-  originalCommandCount: parsedScenario.commands.length,
-  emittedCommandCount: preview.scenario.commands.length,
-  skipped: preview.skipped,
-  approximations: preview.approximations,
+  startScenarioId,
+  scenarioCount: previews.length,
+  originalCommandCount: sceneReports.reduce((sum, item) => sum + item.originalCommandCount, 0),
+  emittedCommandCount: sceneReports.reduce((sum, item) => sum + item.emittedCommandCount, 0),
+  skippedCount: sceneReports.reduce((sum, item) => sum + item.skipped.length, 0),
+  approximationCount: sceneReports.reduce((sum, item) => sum + item.approximations.length, 0),
+  scenarios: sceneReports,
   assets: {
     referenced: references.length,
     copied: assetResolution.resolved.length,
@@ -125,16 +189,9 @@ const report = {
 };
 
 await Promise.all([
-  writeFile(path.join(dataRoot, "first.ks"), emitter.emitFirstScript(scenarioStorage), "utf8"),
-  writeFile(path.join(dataRoot, ...scenarioStorage.split("/")), scenarioScript, "utf8"),
+  writeFile(path.join(dataRoot, "first.ks"), emitter.emitFirstScript(`scenario/${startScenarioId}.ks`), "utf8"),
   writeFile(path.join(outputPath.resolved, "assets.generated.json"), `${JSON.stringify(manifest, null, 2)}\n`, "utf8"),
-  writeFile(path.join(outputPath.resolved, "preview-report.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8"),
-  writeFile(path.join(outputPath.resolved, "trace", `${parsedScenario.id}.trace.log`), renderScenarioTrace(preview.scenario), "utf8"),
-  writeFile(
-    path.join(outputPath.resolved, "state", `${parsedScenario.id}.final-state.json`),
-    `${JSON.stringify(reduceScenarioLinearly(preview.scenario), null, 2)}\n`,
-    "utf8"
-  )
+  writeFile(path.join(outputPath.resolved, "preview-report.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8")
 ]);
 
 const runtimeRoot = path.join(repositoryRoot, "runtime", "local", "kirikiri");
@@ -153,8 +210,9 @@ if (hasFlag("--launch")) {
 }
 
 console.log(`Built real-data diagnostic preview: ${path.relative(repositoryRoot, outputPath.resolved)}`);
+console.log(`Scenarios: ${report.scenarioCount}, start=${report.startScenarioId}`);
 console.log(
-  `Commands: ${report.emittedCommandCount}/${report.originalCommandCount} emitted, ${report.skipped.length} skipped, ${report.approximations.length} approximated`
+  `Commands: ${report.emittedCommandCount}/${report.originalCommandCount} emitted, ${report.skippedCount} skipped, ${report.approximationCount} approximated`
 );
 console.log(`Assets: ${report.assets.copied}/${report.assets.referenced} copied`);
 if (hasFlag("--deploy")) console.log(`Deployed to: ${path.relative(repositoryRoot, runtimeData)}`);

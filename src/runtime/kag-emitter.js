@@ -165,7 +165,8 @@ export class KagEmitter {
         return `@image storage=\"${storage}\" layer=base page=${page}`;
       }
       case "sprite.show": {
-        if (!supportedPositions.has(command.payload.position)) {
+        const hasCoordinates = Number.isFinite(command.payload.x) && Number.isFinite(command.payload.y);
+        if (!hasCoordinates && !supportedPositions.has(command.payload.position)) {
           throw new UnsupportedKanonCommandError(
             command,
             `sprite position needs a Kanon-specific mapping before KAG emission: ${command.payload.position}`
@@ -176,7 +177,10 @@ export class KagEmitter {
         if (!Number.isInteger(opacity) || opacity < 0 || opacity > 255) {
           throw new KanonModelError(`sprite opacity must be an integer from 0 to 255: ${opacity}`);
         }
-        return `@image storage=\"${storage}\" layer=${command.payload.layer} page=${page} pos=${command.payload.position} opacity=${opacity} visible=true`;
+        const placement = hasCoordinates
+          ? `left=${Math.round(command.payload.x)} top=${Math.round(command.payload.y)}`
+          : `pos=${command.payload.position}`;
+        return `@image storage=\"${storage}\" layer=${command.payload.layer} page=${page} ${placement} opacity=${opacity} visible=true`;
       }
       case "sprite.hide":
         return `@freeimage layer=${command.payload.layer} page=${page}`;

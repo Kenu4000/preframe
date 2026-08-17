@@ -88,6 +88,17 @@
       "portBehavior": "private/kanon_original/bgm内の変換済みWAV配置とWAVヘッダは検査できるが、原作NWAからWAVを再生成する変換処理は未実装",
       "evidence": "ユーザーのローカル解析環境でBGMファイルがNWA形式であることを確認",
       "verification": "NWAの抽象化済み形式情報または検証済みローカル変換手段を用意し、合成または権利上問題のないNWA fixtureで変換テストを追加した後、生成WAVと原作とのループ位置・音量・再生時間を比較する"
+    },
+    {
+      "id": "KF-0009",
+      "title": "SEEN0070のオブジェクト合成と立ち絵切替効果は未確定",
+      "status": "open",
+      "severity": "blocking",
+      "scope": "sprite-compositing-runtime",
+      "originalBehavior": "grpBuffer、objBg系命令、grpMultiにより背景と立ち絵を合成し、指定された効果で画面へ反映する",
+      "portBehavior": "診断プレビューではliteral代入、itoa、文字列追記からBG003aまたはBG006とSDT0107、object 84、座標8,8を復元し、背景と立ち絵をKAGへ直接表示する。grpMultiのeffect 0、48、60、copy引数、OBJWAIPERASEの意味は未確定で無視する",
+      "evidence": "ユーザー提供の短縮SEEN0070と会話途中断片の抽象命令列。途中断片は独立シナリオではなく、本線へ自動結合していない",
+      "verification": "同じ区間の原作録画と診断版を比較し、立ち絵ID、表示座標、レイヤ、消去、差分切替、grpMulti効果時間を個別に確定する"
     }
   ]
 }

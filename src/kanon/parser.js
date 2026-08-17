@@ -84,7 +84,13 @@ export class KanonParser {
         break;
       case "sprite.show":
         requireString("slot");
-        requireString("position");
+        if (payload.position === undefined) {
+          if (!Number.isFinite(payload.x) || !Number.isFinite(payload.y)) {
+            throw new KanonModelError("sprite.show requires a named position or finite x/y coordinates");
+          }
+        } else {
+          requireString("position");
+        }
         requireNonNegative("layer");
         break;
       case "sprite.hide":
