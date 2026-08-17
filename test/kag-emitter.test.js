@@ -257,3 +257,29 @@ test("KAG emitter reproduces the verified two-second white fade and hold", () =>
   assert.match(output, /@trans method=crossfade time=2000 layer=base children=false/);
   assert.match(output, /@wait time=2000 canskip=false/);
 });
+
+test("KAG emitter switches jump(70) to the generated SEEN0070 scenario", () => {
+  const decoded = new JsonDecodedRecordDecoder().decode({
+    schemaVersion: 1,
+    sourceFile: "SYNTHETIC.org",
+    scenario: { id: "SEEN0050", entryLabel: "start" },
+    records: [
+      { offset: 0, opcode: "#entrypoint", rawArguments: [], decodedKind: "label", payload: { name: "start" } },
+      {
+        offset: 1,
+        opcode: "jump",
+        rawArguments: [{ type: "integer", value: 70 }],
+        decodedKind: "kanon.scenario.jump",
+        payload: {
+          targetSceneNumber: 70,
+          targetScenarioId: "SEEN0070",
+          verifiedBehavior: true
+        }
+      }
+    ]
+  });
+  const scenario = new KanonParser().parse(decoded);
+  const output = new KagEmitter(new KanonAssetCatalog({ schemaVersion: 1, assets: [] })).emitScenario(scenario);
+  assert.match(output, /@jump storage="scenario\/SEEN0070\.ks"/);
+  assert.doesNotMatch(output, /target=\*SEEN0070/);
+});

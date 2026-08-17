@@ -162,3 +162,27 @@ test("verified white fade, hold, and opening call remain explicit in state and t
   assert.match(trace, /WAIT 2000ms skippable=false/);
   assert.match(trace, /KANON_OPENING_START target=8502/);
 });
+
+test("cross-scenario jump exposes the next SEEN file in state and trace", () => {
+  const decoded = new JsonDecodedRecordDecoder().decode({
+    schemaVersion: 1,
+    sourceFile: "SYNTHETIC.org",
+    scenario: { id: "SEEN0050", entryLabel: "start" },
+    records: [
+      { offset: 0, opcode: "#entrypoint", rawArguments: [], decodedKind: "label", payload: { name: "start" } },
+      {
+        offset: 1,
+        opcode: "jump",
+        rawArguments: [{ type: "integer", value: 70 }],
+        decodedKind: "kanon.scenario.jump",
+        payload: { targetSceneNumber: 70, targetScenarioId: "SEEN0070", verifiedBehavior: true }
+      }
+    ]
+  });
+  const scenario = new KanonParser().parse(decoded);
+  const state = reduceScenarioLinearly(scenario);
+  const trace = renderScenarioTrace(scenario);
+  assert.equal(state.scenario.id, "SEEN0050");
+  assert.equal(state.scenario.nextId, "SEEN0070");
+  assert.match(trace, /KANON_SCENARIO_JUMP number=70 target=SEEN0070/);
+});

@@ -2,7 +2,7 @@ import { KanonModelError } from "./model.js";
 
 export function createInitialKanonState(scenarioId) {
   return {
-    scenario: { id: scenarioId, commandIndex: -1, label: null, nextLabel: null, ended: false },
+    scenario: { id: scenarioId, commandIndex: -1, label: null, nextLabel: null, nextId: null, ended: false },
     variables: {},
     flags: {},
     visual: { background: null, sprites: {} },
@@ -142,6 +142,10 @@ export class KanonStateMachine {
       case "kanon.opening.start":
         state.flow.phase = "opening";
         state.flow.openingCallTarget = command.payload.callTarget;
+        break;
+      case "kanon.scenario.jump":
+        state.scenario.nextId = command.payload.targetScenarioId;
+        state.scenario.nextLabel = null;
         break;
       case "variable.set":
         state.variables[command.payload.name] = structuredClone(command.payload.value);

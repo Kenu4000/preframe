@@ -209,6 +209,10 @@ function verifiedGrpOpenBgBehavior(originalId, effectCode) {
   return null;
 }
 
+function scenarioIdFromJumpNumber(sceneNumber) {
+  return `SEEN${String(sceneNumber).padStart(4, "0")}`;
+}
+
 function unknownRecord(source, sourceFile, mnemonic, rawArguments, payload = {}) {
   return {
     sourceFile,
@@ -450,6 +454,33 @@ export class KprlDisassemblyDecoder extends KanonDecoder {
               callTarget: rawArguments[0].value,
               verifiedBehavior: true,
               evidence: "opening-start-observed-after-white-hold-2026-08-18",
+              sourceLine: source.lineNumber
+            },
+            synthetic: false,
+            provenance: "kprl-disassembly",
+            line: source.lineNumber
+          });
+          continue;
+        }
+
+        if (
+          mnemonic === "jump" &&
+          rawArguments.length === 1 &&
+          rawArguments[0].type === "integer" &&
+          rawArguments[0].value >= 0
+        ) {
+          const targetSceneNumber = rawArguments[0].value;
+          records.push({
+            sourceFile,
+            offset: source.byteOffset,
+            opcode: mnemonic,
+            rawArguments,
+            decodedKind: "kanon.scenario.jump",
+            payload: {
+              targetSceneNumber,
+              targetScenarioId: scenarioIdFromJumpNumber(targetSceneNumber),
+              verifiedBehavior: true,
+              evidence: "user-analysis-2026-08-18",
               sourceLine: source.lineNumber
             },
             synthetic: false,

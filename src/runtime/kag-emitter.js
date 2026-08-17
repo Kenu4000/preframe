@@ -315,6 +315,8 @@ export class KagEmitter {
           command,
           `opening playback for farcall(${payload.callTarget}) is not implemented`
         );
+      case "kanon.scenario.jump":
+        return [`@jump storage="scenario/${safeLabel(payload.targetScenarioId)}.ks"`];
       case "variable.set":
         return [`@eval exp=\"f.kanon_var_${safeVariableName(payload.name)}=${tjsLiteral(payload.value)}\"`];
       case "flag.set":

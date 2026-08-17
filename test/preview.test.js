@@ -41,7 +41,12 @@ test("diagnostic preview keeps supported real-data commands and records every om
         advanceMode: "kanon.pause"
       }),
       command("bgm.play", 4, "bgmLoop", { asset: bgm, loop: true }),
-      command("kanon.opening.start", 5, "farcall", { callTarget: 8502, verifiedBehavior: true })
+      command("kanon.opening.start", 5, "farcall", { callTarget: 8502, verifiedBehavior: true }),
+      command("kanon.scenario.jump", 6, "jump", {
+        targetSceneNumber: 70,
+        targetScenarioId: "SEEN0070",
+        verifiedBehavior: true
+      })
     ]
   });
 
@@ -58,8 +63,10 @@ test("diagnostic preview keeps supported real-data commands and records every om
   assert.deepEqual(preview.skipped.map((item) => item.reason), [
     "unresolved-command",
     "local-asset-not-resolved",
-    "opening-playback-not-implemented"
+    "opening-playback-not-implemented",
+    "target-scenario-not-built"
   ]);
+  assert.equal(preview.skipped[3].targetScenarioId, "SEEN0070");
   assert.deepEqual(preview.approximations.map((item) => item.reason), [
     "unverified-background-effect-ignored",
     "speaker-expression-omitted",

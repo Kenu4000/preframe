@@ -25,12 +25,13 @@ npm run import:kprl -- \
 | `grpOpenBg('SIRO', 26)` | `kanon.background.open` | 30fps録画で約2.0秒かけて白へ移行することを確認 |
 | `wait(2000)` | `wait` | 白への移行完了後、OP呼出し前に約2.0秒保持することを録画から確認 |
 | `farcall(8502)` | `kanon.opening.start` | 白画面保持後にOPへ移行することを確認。OP本体の再生実装は未対応 |
+| `jump(70)` | `kanon.scenario.jump` | 現在の`SEEN0050`からシナリオ番号70へ切り替わることをユーザー解析で確認。出力先は`scenario/SEEN0070.ks` |
 | その他の命令 | `unknown` | 命令名と型付き引数を保持し、挙動は推測しない |
 
 `.org` に原作バイナリ上のbyte offsetと数値opcodeはありません。そのため `source.offset` は `.org` 内のUTF-8 byte offset、`source.opcode` はKprlの命令名で、`provenance` は `kprl-disassembly` です。元バイナリ位置・opcodeを回復できる資料が得られた時点で、別Decoderまたは対応表を追加します。
 
 ## 未確定のまま保持するもの
 
-`title`、確認済みの組合せ以外の `grpOpenBg`・`farcall`、`jump`、`eof`、`halt` 等は、名前だけからランタイム挙動を決めません。`kanon.kprl.<命令名>` を候補名として保持し、Parserでは `unknown` になります。`farcall(8502)`はOP開始として識別できますが、OP本体のアセットと演出が未実装のためKAG出力を拒否します。
+`title`、確認済みの組合せ以外の `grpOpenBg`・`farcall`、`eof`、`halt` 等は、名前だけからランタイム挙動を決めません。`kanon.kprl.<命令名>` を候補名として保持し、Parserでは `unknown` になります。整数1引数の`jump`は別のSEEN番号への切替として保持します。`farcall(8502)`はOP開始として識別できますが、OP本体のアセットと演出が未実装のためKAG出力を拒否します。
 
 本文先頭の `\\{女の子}` のような単純なspeaker markupは、独立した名前欄や別メッセージにはせず、続く本文と同じ行へ `女の子「……」` の形で出力します。`\\m{A}` のような式は展開せず `speakerExpression` に残します。クリック待ちと本文消去は確認済みですが、文字配置、ウィンドウ外観、macro展開は未確認なので、通常のKAG emitterは実本文の出力をまだ拒否します。

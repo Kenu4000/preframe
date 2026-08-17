@@ -17,6 +17,7 @@ export const KANON_COMMAND_KINDS = Object.freeze([
   "kanon.message.hide",
   "kanon.message.pause",
   "kanon.opening.start",
+  "kanon.scenario.jump",
   "variable.set",
   "flag.set",
   "jump",

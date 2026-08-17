@@ -118,6 +118,14 @@ export class KanonParser {
           throw new KanonModelError("kanon.opening.start.callTarget must be a non-negative integer");
         }
         break;
+      case "kanon.scenario.jump":
+        if (!Number.isSafeInteger(payload.targetSceneNumber) || payload.targetSceneNumber < 0) {
+          throw new KanonModelError("kanon.scenario.jump.targetSceneNumber must be a non-negative integer");
+        }
+        if (typeof payload.targetScenarioId !== "string" || !/^SEEN\d{4,}$/u.test(payload.targetScenarioId)) {
+          throw new KanonModelError("kanon.scenario.jump.targetScenarioId must use the canonical SEEN number");
+        }
+        break;
       case "variable.set":
       case "flag.set":
         requireString("name");
