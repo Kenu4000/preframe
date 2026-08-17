@@ -3,25 +3,25 @@
   "differences": [
     {
       "id": "KF-0001",
-      "title": "実Kanon制御データDecoderは未実装",
+      "title": "元バイナリのbyte offsetと数値opcodeを復元するDecoderは未実装",
       "status": "open",
       "severity": "blocking",
       "scope": "importer",
-      "originalBehavior": "解析済み制御データから原作命令列を復元できる",
-      "portBehavior": "合成JSONレコードだけをDecoder契約の検証入力にできる",
-      "evidence": "実フォーマットの抽象化済み仕様待ち",
-      "verification": "既知の1シーンをdecodeし、offset・opcode・引数・命令数を解析結果と照合する"
+      "originalBehavior": "原作制御データの位置とopcodeを含む命令列を復元できる",
+      "portBehavior": "Kprl 1.45の.orgと.utfを結合し、Kprl上のbyte offset・命令名・型付き引数・本文参照を保持できる。元バイナリ位置と数値opcodeは入力に存在しない",
+      "evidence": "短縮サンプルでKprl逆アセンブル形式を確認。元バイナリ位置を示す列は含まれていない",
+      "verification": "元バイナリ位置・数値opcodeを含む解析情報と対応付け、既知シーンの命令数・位置・opcodeを照合する"
     },
     {
       "id": "KF-0002",
       "title": "KiriKiri/KAG実機でのダミー再生は未検証",
-      "status": "open",
+      "status": "fixed",
       "severity": "high",
       "scope": "runtime",
       "originalBehavior": "対象のKiriKiri/KAG環境で画面・音・入力が動作する",
-      "portBehavior": "KAG出力と生成アセットの静的検査まで完了できる",
-      "evidence": "リポジトリにKiriKiri/KAG本体を同梱していない",
-      "verification": "Windows上の採用KAGテンプレートへ生成物を配置し、first.ksから通し再生する"
+      "portBehavior": "生成物をWindows上のKAG3/KiriKiri Z環境へ配置して起動確認済み",
+      "evidence": "初回は背景サイズ不一致を検出し、640x480への修正後にユーザー環境で起動を確認",
+      "verification": "今後もruntime出力変更時にWindows実機でfirst.ksからダミーシーンを再生する"
     },
     {
       "id": "KF-0003",
@@ -33,6 +33,17 @@
       "portBehavior": "当初はダミー背景だけが800x600で、transタグがサイズ不一致エラーになった。640x480へ修正済み",
       "evidence": "Windows実機でscenario/dummy.ks 15行目のtransタグが800x600対640x480の不一致を報告",
       "verification": "生成PNGのIHDRが640x480であることを自動テストし、Windows実機でcrossfadeを再確認する"
+    },
+    {
+      "id": "KF-0004",
+      "title": "短縮Kprlサンプル内の実行命令の意味とタイミングが未確定",
+      "status": "open",
+      "severity": "blocking",
+      "scope": "importer-runtime",
+      "originalBehavior": "各Kprl命令が原作どおりの画面、音、入力、制御フローを実行する",
+      "portBehavior": "title、bgmLoop、msgHide、grpOpenBg、pause、bgmFadeOut、wait、farcall、jump、eof、haltを型付き引数とともにunknownとして保持し、KAG出力は失敗させる",
+      "evidence": "短縮サンプルから構文と命令順は得られたが、各引数の単位、同期性、状態変化、遷移先種別は示されていない",
+      "verification": "各命令について引数の意味と実機挙動を確認し、1命令ずつ回帰テストを追加してknownへ昇格する"
     }
   ]
 }
